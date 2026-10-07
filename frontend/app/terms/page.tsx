@@ -8,7 +8,7 @@ export default function TermsPage() {
                 <h1 className="text-3xl font-bold mb-8 text-black">Terms of Service</h1>
 
                 <p className="text-sm text-gray-500 mb-6" suppressHydrationWarning>
-                    Last Updated: <span suppressHydrationWarning>{new Date().toLocaleDateString('tr-TR')}</span>
+                    Last Updated: <span suppressHydrationWarning>{new Date().toLocaleDateString('en-US')}</span>
                 </p>
 
                 <h2 className="text-xl font-bold mt-8 mb-4 text-black">1. Acceptance of Terms</h2>
@@ -18,7 +18,7 @@ export default function TermsPage() {
 
                 <h2 className="text-xl font-bold mt-8 mb-4 text-black">2. Description of Service</h2>
                 <p>
-                    CV Maker provides an online resume builder tool. We offer both free and paid subscriptions.
+                    Vitascor provides an online resume builder tool. We offer both free and paid subscriptions.
                     We reserve the right to modify or discontinue the service at any time.
                 </p>
 

@@ -1,9 +1,27 @@
 'use client'
 
 import { useState, use } from 'react'
+import { useFormStatus } from 'react-dom'
 import { login, signup } from './actions'
 import Link from 'next/link'
 import { ArrowLeft, FileText } from 'lucide-react'
+
+function AuthSubmitButton({ mode }: { mode: 'login' | 'signup' }) {
+    const { pending } = useFormStatus()
+    const label = mode === 'login' ? 'Sign in' : 'Create Account'
+    const pendingLabel = mode === 'login' ? 'Signing in…' : 'Creating account…'
+
+    return (
+        <button
+            formAction={mode === 'login' ? login : signup}
+            type="submit"
+            disabled={pending}
+            className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition disabled:opacity-60 disabled:cursor-wait ${mode === 'login' ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'}`}
+        >
+            {pending ? pendingLabel : label}
+        </button>
+    )
+}
 
 export default function LoginPage({
     searchParams,
@@ -26,7 +44,7 @@ export default function LoginPage({
                     <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
                         <FileText className="text-white" size={24} />
                     </div>
-                    <span className="text-2xl font-bold text-gray-900">CV Maker</span>
+                    <span className="text-2xl font-bold text-gray-900">Vitascor</span>
                 </Link>
                 <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
                     {isLogin ? 'Sign in to your account' : 'Create your account'}
@@ -152,22 +170,7 @@ export default function LoginPage({
                         )}
 
                         <div>
-                            {isLogin ? (
-                                <button
-                                    formAction={login}
-                                    type="submit"
-                                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
-                                >
-                                    Sign in
-                                </button>
-                            ) : (
-                                <button
-                                    formAction={signup}
-                                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition"
-                                >
-                                    Create Account
-                                </button>
-                            )}
+                            <AuthSubmitButton mode={isLogin ? 'login' : 'signup'} />
                         </div>
                     </form>
 

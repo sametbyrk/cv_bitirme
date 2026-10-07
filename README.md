@@ -86,7 +86,7 @@ flowchart LR
     Web -->|Prisma data access| DB[(Supabase<br/>PostgreSQL)]
     API -->|SQLAlchemy async| DB
     API -->|Text generation| Gemini[Google Gemini API]
-    Web -->|PDF generation| PDF[@react-pdf/renderer]
+    Web -->|PDF generation| PdfRenderer[PDF renderer]
 ```
 
 The frontend contains the resume experience and server-side routes. The FastAPI service provides resume, user, and AI endpoints. PostgreSQL stores user and resume records; resume content is modeled as structured JSON. Gemini is used for AI text generation.
@@ -221,7 +221,7 @@ flowchart LR
     Web -->|Prisma veri erişimi| DB[(Supabase<br/>PostgreSQL)]
     API -->|Asenkron SQLAlchemy| DB
     API -->|Metin üretimi| Gemini[Google Gemini API]
-    Web -->|PDF üretimi| PDF[@react-pdf/renderer]
+    Web -->|PDF üretimi| PdfRenderer[PDF işleyici]
 ```
 
 Frontend özgeçmiş deneyimini ve sunucu tarafı rotaları içerir. FastAPI; CV, kullanıcı ve AI uç noktalarını sağlar. PostgreSQL kullanıcı ve özgeçmiş kayıtlarını tutar; özgeçmiş içeriği yapılandırılmış JSON olarak modellenir. Gemini, AI metin üretiminde kullanılır.

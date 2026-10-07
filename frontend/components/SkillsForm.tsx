@@ -3,9 +3,11 @@
 import React, { useState } from 'react';
 import { useResume } from '@/context/ResumeContext';
 import { Plus, Trash2 } from 'lucide-react';
+import { translateResumeUi } from '@/lib/resume-translations';
 
 export const SkillsForm = () => {
     const { resumeData, setResumeData } = useResume();
+    const t = (text: string) => translateResumeUi(text, resumeData.meta?.language);
     const [skillInput, setSkillInput] = useState('');
 
     const addSkill = () => {
@@ -33,7 +35,7 @@ export const SkillsForm = () => {
 
     return (
         <div className="space-y-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-800">Skills</h3>
+            <h3 className="text-lg font-semibold text-gray-800">{t('Skills')}</h3>
 
             <div className="flex gap-2">
                 <input
@@ -42,13 +44,13 @@ export const SkillsForm = () => {
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Add a skill (e.g. JavaScript, React)"
+                    placeholder={t('Add a skill (e.g. JavaScript, React)')}
                 />
                 <button
                     onClick={addSkill}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                    Add
+                    {t('Add')}
                 </button>
             </div>
 
@@ -69,7 +71,7 @@ export const SkillsForm = () => {
                 ))}
                 {resumeData.skills.length === 0 && (
                     <div className="text-gray-400 text-sm italic">
-                        No skills added yet.
+                        {t('No skills added yet.')}
                     </div>
                 )}
             </div>

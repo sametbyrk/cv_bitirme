@@ -18,13 +18,14 @@ export default async function Dashboard() {
 
     // 3. Fetch Resumes from FastAPI Backend
     let resumes: any[] = [];
+    let resumeLoadFailed = false;
     try {
         const resumesData = await api.get('/resumes/');
         resumes = Array.isArray(resumesData) ? resumesData : [];
     } catch (error) {
         console.error('Failed to fetch resumes from FastAPI:', error);
-        resumes = [];
+        resumeLoadFailed = true;
     }
 
-    return <DashboardClient resumes={resumes} user={user} />;
+    return <DashboardClient resumes={resumes} user={user} resumeLoadFailed={resumeLoadFailed} />;
 }

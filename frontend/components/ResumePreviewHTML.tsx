@@ -3,14 +3,27 @@
 import React from 'react';
 import { useResume } from '@/context/ResumeContext';
 import { Mail, Phone, Linkedin, MapPin, Github } from 'lucide-react';
+import { translateResumeUi } from '@/lib/resume-translations';
 
 const SECTION_TITLES = {
-    en: { experience: 'Experience', education: 'Education', skills: 'Skills', languages: 'Languages', projects: 'Projects', certificates: 'Certificates', summary: 'Summary', contact: 'Contact' },
-    tr: { experience: 'İş Deneyimi', education: 'Eğitim', skills: 'Yetenekler', languages: 'Diller', projects: 'Projeler', certificates: 'Sertifikalar', summary: 'Özet', contact: 'İletişim' },
-    de: { experience: 'Berufserfahrung', education: 'Ausbildung', skills: 'Fähigkeiten', languages: 'Sprachen', projects: 'Projekte', certificates: 'Zertifikate', summary: 'Profil', contact: 'Kontakt' },
-    es: { experience: 'Experiencia', education: 'Educación', skills: 'Habilidades', languages: 'Idiomas', projects: 'Proyectos', certificates: 'Certificados', summary: 'Resumen Profesional', contact: 'Contacto' },
-    fr: { experience: 'Expérience', education: 'Éducation', skills: 'Compétences', languages: 'Langues', projects: 'Projets', certificates: 'Certificats', summary: 'Résumé Professionnel', contact: 'Contact' },
+    en: { experience: 'Experience', education: 'Education', skills: 'Skills', languages: 'Languages', projects: 'Projects', certificates: 'Certificates', summary: 'Summary', contact: 'Contact', email: 'Email', phone: 'Phone', linkedin: 'LinkedIn', github: 'GitHub', location: 'Location', verifyCertificate: 'Verify certificate' },
+    tr: { experience: 'İş Deneyimi', education: 'Eğitim', skills: 'Yetenekler', languages: 'Diller', projects: 'Projeler', certificates: 'Sertifikalar', summary: 'Özet', contact: 'İletişim', email: 'E-posta', phone: 'Telefon', linkedin: 'LinkedIn', github: 'GitHub', location: 'Konum', verifyCertificate: 'Sertifikayı doğrula' },
+    de: { experience: 'Berufserfahrung', education: 'Ausbildung', skills: 'Fähigkeiten', languages: 'Sprachen', projects: 'Projekte', certificates: 'Zertifikate', summary: 'Profil', contact: 'Kontakt', email: 'E-Mail', phone: 'Telefon', linkedin: 'LinkedIn', github: 'GitHub', location: 'Standort', verifyCertificate: 'Zertifikat überprüfen' },
+    es: { experience: 'Experiencia', education: 'Educación', skills: 'Habilidades', languages: 'Idiomas', projects: 'Proyectos', certificates: 'Certificados', summary: 'Resumen profesional', contact: 'Contacto', email: 'Correo electrónico', phone: 'Teléfono', linkedin: 'LinkedIn', github: 'GitHub', location: 'Ubicación', verifyCertificate: 'Verificar certificado' },
+    fr: { experience: 'Expérience', education: 'Formation', skills: 'Compétences', languages: 'Langues', projects: 'Projets', certificates: 'Certificats', summary: 'Résumé professionnel', contact: 'Contact', email: 'E-mail', phone: 'Téléphone', linkedin: 'LinkedIn', github: 'GitHub', location: 'Localisation', verifyCertificate: 'Vérifier le certificat' },
 };
+
+function normalizeExternalUrl(value?: string) {
+    const input = value?.trim();
+    if (!input) return undefined;
+    const candidate = /^[a-z][a-z\d+.-]*:/i.test(input) ? input : `https://${input}`;
+    try {
+        const url = new URL(candidate);
+        return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : undefined;
+    } catch {
+        return undefined;
+    }
+}
 
 export function ResumePreviewHTML() {
     const { resumeData } = useResume();
@@ -115,7 +128,7 @@ export function ResumePreviewHTML() {
                                 {languages.map((lang, i) => (
                                     <div key={i} className="flex justify-between text-xs">
                                         <span className="text-white font-medium">{lang.language}</span>
-                                        <span className="text-gray-400">{lang.level}</span>
+                                        <span className="text-gray-400">{translateResumeUi(lang.level, langCode)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -129,11 +142,13 @@ export function ResumePreviewHTML() {
                                 {titles.certificates}
                             </h2>
                             <div className="space-y-3">
-                                {certificates.map((cert: any, i: number) => (
+                                {certificates.map((cert: any, i: number) => {
+                                    const certificateUrl = normalizeExternalUrl(cert.link);
+                                    return (
                                     <div key={i}>
                                         <h3 className="font-bold text-white text-xs">
-                                            {cert.link ? (
-                                                <a href={cert.link} target="_blank" rel="noopener noreferrer" className="hover:text-blue-300 underline underline-offset-2">
+                                            {certificateUrl ? (
+                                                <a href={certificateUrl} target="_blank" rel="noopener noreferrer" className="hover:text-blue-300 underline underline-offset-2">
                                                     {cert.name} ↗
                                                 </a>
                                             ) : (
@@ -142,7 +157,7 @@ export function ResumePreviewHTML() {
                                         </h3>
                                         <p className="text-xs text-gray-400">{cert.issuer} {cert.date && `• ${cert.date}`}</p>
                                     </div>
-                                ))}
+                                )})}
                             </div>
                         </div>
                     )}
@@ -157,7 +172,7 @@ export function ResumePreviewHTML() {
                             <h2 className="text-xl font-bold text-gray-900 border-b-2 border-slate-900 pb-2 mb-4 uppercase">
                                 {titles.summary}
                             </h2>
-                            <p className="text-sm text-gray-600 leading-7 text-justify">
+                            <p className="text-sm text-gray-600 leading-7 text-justify whitespace-pre-line">
                                 {personalInfo.summary}
                             </p>
                         </div>
@@ -184,7 +199,7 @@ export function ResumePreviewHTML() {
                                         <div className="text-sm font-semibold text-blue-600 mb-2">
                                             {exp.company}
                                         </div>
-                                        <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                                        <p className="text-sm text-gray-600 leading-relaxed text-justify whitespace-pre-line">
                                             {exp.description}
                                         </p>
                                     </div>
@@ -210,7 +225,7 @@ export function ResumePreviewHTML() {
                                                 </a>
                                             )}
                                         </div>
-                                        <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                                        <p className="text-sm text-gray-600 leading-relaxed text-justify whitespace-pre-line">
                                             {proj.description}
                                         </p>
                                     </div>
@@ -241,11 +256,11 @@ export function ResumePreviewHTML() {
 
                     {/* Contact Info - Plain Text for ATS */}
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
-                        {personalInfo.email && <span>Email: {personalInfo.email}</span>}
-                        {personalInfo.phone && <span>| Phone: {personalInfo.phone}</span>}
-                        {personalInfo.linkedin && <span>| LinkedIn: <a href={personalInfo.linkedin.startsWith('http') ? personalInfo.linkedin : `https://${personalInfo.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{personalInfo.linkedin}</a></span>}
-                        {personalInfo.github && <span>| GitHub: <a href={personalInfo.github.startsWith('http') ? personalInfo.github : `https://${personalInfo.github}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{personalInfo.github}</a></span>}
-                        {personalInfo.address && <span>| Location: {personalInfo.address}</span>}
+                        {personalInfo.email && <span>{titles.email}: {personalInfo.email}</span>}
+                        {personalInfo.phone && <span>| {titles.phone}: {personalInfo.phone}</span>}
+                        {personalInfo.linkedin && <span>| {titles.linkedin}: <a href={personalInfo.linkedin.startsWith('http') ? personalInfo.linkedin : `https://${personalInfo.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{personalInfo.linkedin}</a></span>}
+                        {personalInfo.github && <span>| {titles.github}: <a href={personalInfo.github.startsWith('http') ? personalInfo.github : `https://${personalInfo.github}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{personalInfo.github}</a></span>}
+                        {personalInfo.address && <span>| {titles.location}: {personalInfo.address}</span>}
                     </div>
                 </div>
             </div>
@@ -256,7 +271,7 @@ export function ResumePreviewHTML() {
                     <h2 className="text-sm font-bold text-gray-800 uppercase tracking-widest border-b-2 border-gray-600 pb-1 mb-2">
                         {titles.summary}
                     </h2>
-                    <p className="text-sm text-gray-700 leading-relaxed">
+                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
                         {personalInfo.summary}
                     </p>
                 </div>
@@ -278,7 +293,7 @@ export function ResumePreviewHTML() {
                                     </div>
                                     <span className="text-xs font-semibold text-gray-700">{exp.startDate} - {exp.endDate}</span>
                                 </div>
-                                <p className="text-sm text-gray-700 leading-relaxed">{exp.description}</p>
+                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{exp.description}</p>
                             </div>
                         ))}
                     </div>
@@ -298,7 +313,7 @@ export function ResumePreviewHTML() {
                                     <span className="text-sm font-bold text-gray-900">{proj.name}</span>
                                     {proj.link && <a href={proj.link.startsWith('http') ? proj.link : `https://${proj.link}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">{proj.link}</a>}
                                 </div>
-                                <p className="text-sm text-gray-700 leading-relaxed">{proj.description}</p>
+                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{proj.description}</p>
                             </div>
                         ))}
                     </div>
@@ -321,7 +336,7 @@ export function ResumePreviewHTML() {
                                     </div>
                                     <span className="text-xs font-semibold text-gray-700">{edu.startDate} - {edu.endDate}</span>
                                 </div>
-                                {edu.description && <p className="text-sm text-gray-600">{edu.description}</p>}
+                                {edu.description && <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{edu.description}</p>}
                             </div>
                         ))}
                     </div>
@@ -347,7 +362,7 @@ export function ResumePreviewHTML() {
                         {titles.languages}
                     </h2>
                     <p className="text-sm text-gray-700">
-                        {languages.map((lang, i) => `${lang.language} (${lang.level})`).join(' • ')}
+                        {languages.map((lang, i) => `${lang.language} (${translateResumeUi(lang.level, langCode)})`).join(' • ')}
                     </p>
                 </div>
             )}
@@ -359,13 +374,16 @@ export function ResumePreviewHTML() {
                         {titles.certificates}
                     </h2>
                     <div className="space-y-1">
-                        {certificates.map((cert: any, i: number) => (
+                        {certificates.map((cert: any, i: number) => {
+                            const certificateUrl = normalizeExternalUrl(cert.link);
+                            return (
                             <div key={i} className="text-sm">
                                 <span className="font-semibold text-gray-900">{cert.name}</span>
                                 {cert.issuer && <span className="text-gray-600"> - {cert.issuer}</span>}
                                 {cert.date && <span className="text-gray-500"> ({cert.date})</span>}
+                                {certificateUrl && <span className="text-gray-600"> - <a href={certificateUrl} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">{titles.verifyCertificate}: {new URL(certificateUrl).host}</a></span>}
                             </div>
-                        ))}
+                        )})}
                     </div>
                 </div>
             )}

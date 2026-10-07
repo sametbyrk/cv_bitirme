@@ -12,7 +12,7 @@ export default function Home() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
               <FileText className="text-white" size={20} />
             </div>
-            <span className="text-xl font-bold text-gray-900">CV Maker</span>
+            <span className="text-xl font-bold text-gray-900">Vitascor</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/pricing" className="text-blue-600 hover:text-blue-800 font-bold text-lg">

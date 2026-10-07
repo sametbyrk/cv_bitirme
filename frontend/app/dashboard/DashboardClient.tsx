@@ -10,9 +10,10 @@ import { logout } from '@/app/login/actions';
 interface DashboardClientProps {
     resumes: any[];
     user: any;
+    resumeLoadFailed?: boolean;
 }
 
-export default function DashboardClient({ resumes, user }: DashboardClientProps) {
+export default function DashboardClient({ resumes, user, resumeLoadFailed = false }: DashboardClientProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredResumes, setFilteredResumes] = useState(resumes);
 
@@ -38,7 +39,7 @@ export default function DashboardClient({ resumes, user }: DashboardClientProps)
                             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
                                 <FileText className="text-white" size={20} />
                             </div>
-                            <span className="text-xl font-bold text-gray-900">CV Maker</span>
+                            <span className="text-xl font-bold text-gray-900">Vitascor</span>
                         </Link>
                     </div>
 
@@ -76,6 +77,23 @@ export default function DashboardClient({ resumes, user }: DashboardClientProps)
                         Create New Resume
                     </Link>
                 </div>
+
+                {resumeLoadFailed && (
+                    <div role="alert" className="mb-6 flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-950 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="font-semibold">Saved resumes could not be loaded.</p>
+                            <p className="mt-1 text-sm">The database is unreachable, so this page cannot confirm which resumes were saved. Check the database connection and retry. An unsaved draft may still be available in this browser.</p>
+                        </div>
+                        <div className="flex shrink-0 gap-2">
+                            <Link href="/editor" className="rounded-md border border-amber-400 bg-white px-3 py-2 text-sm font-semibold hover:bg-amber-100">
+                                Open editor
+                            </Link>
+                            <button onClick={() => window.location.reload()} className="rounded-md border border-amber-400 bg-white px-3 py-2 text-sm font-semibold hover:bg-amber-100">
+                                Retry
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Search & Filter */}
                 <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 flex items-center gap-4">

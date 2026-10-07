@@ -79,7 +79,7 @@ export default async function AdminPage() {
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Platform Overview</h1>
-            <p className="text-gray-500 text-lg">Hoş geldin, sistemin genel istatistiklerini buradan takip edebilirsin.</p>
+            <p className="text-gray-500 text-lg">Welcome, monitor overall platform statistics and activity here.</p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
                 {/* Total Users */}
@@ -121,8 +121,8 @@ export default async function AdminPage() {
             
             <div className="mt-8 bg-blue-50 rounded-xl p-4 border border-blue-100">
                 <p className="text-sm text-blue-800">
-                    💡 <strong>Bilgi:</strong> İstatistikler sadece sayfayı yenilediğinizde (F5) veritabanından güncel olarak çekilir. 
-                    Veritabanına yük bindirmemek için otomatik yenileme (polling) devre dışı bırakılmıştır.
+                    💡 <strong>Note:</strong> Statistics are loaded directly from the database on page load.
+                    Automatic polling is disabled to minimize unnecessary database load.
                 </p>
             </div>
         </div>

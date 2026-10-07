@@ -125,7 +125,7 @@ class ResumeContent(BaseSchema):
 # --- CRUD Şemaları ---
 
 class ResumeBase(BaseSchema):
-    title: str = Field(default="Başlıksız Özgeçmiş")
+    title: str = Field(default="Untitled Resume")
 
 
 class ResumeCreate(ResumeBase):

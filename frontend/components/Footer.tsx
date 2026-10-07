@@ -10,13 +10,13 @@ export default function Footer() {
                 <div className="md:col-span-2">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold"><FileText className="text-white" size={20} /></div>
-                        <span className="text-xl font-bold text-white">CV Maker</span>
+                        <span className="text-xl font-bold text-white">Vitascor</span>
                     </div>
                     <p className="text-sm leading-relaxed mb-4 max-w-sm">
-                        The AI-powered resume builder helping you land your dream job faster. ATS-friendly, professional, and easy to use.
+                        AI-powered, ATS-friendly resume builder and job-specific optimization platform.
                     </p>
                     <div className="text-xs text-gray-500">
-                        &copy; {new Date().getFullYear()} CV Maker Inc. All rights reserved.
+                        &copy; {new Date().getFullYear()} Vitascor. All rights reserved.
                     </div>
                 </div>
 

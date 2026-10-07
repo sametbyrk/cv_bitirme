@@ -8,7 +8,7 @@ export default function PrivacyPage() {
                 <h1 className="text-3xl font-bold mb-8 text-black">Privacy Policy</h1>
 
                 <p className="text-sm text-gray-500 mb-6" suppressHydrationWarning>
-                    Last Updated: <span suppressHydrationWarning>{new Date().toLocaleDateString('tr-TR')}</span>
+                    Last Updated: <span suppressHydrationWarning>{new Date().toLocaleDateString('en-US')}</span>
                 </p>
 
                 <h2 className="text-xl font-bold mt-8 mb-4 text-black">1. Information We Collect</h2>

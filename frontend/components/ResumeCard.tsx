@@ -18,7 +18,7 @@ function getInitialDate(createdAt: Date | string | undefined | null): string {
     if (!createdAt) return '';
     try {
         const d = new Date(createdAt);
-        return isNaN(d.getTime()) ? '' : d.toLocaleDateString('tr-TR');
+        return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US');
     } catch {
         return '';
     }

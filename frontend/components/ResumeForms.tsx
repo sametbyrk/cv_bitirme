@@ -4,6 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useResume, ResumeData } from '@/context/ResumeContext';
 import { Plus, Trash2, Sparkles, Loader2, GripVertical, Check, X, ArrowRight, Zap } from 'lucide-react';
 import { Reorder, useDragControls, AnimatePresence, motion } from 'framer-motion';
+import { translateResumeUi } from '@/lib/resume-translations';
+
+const L = ({ text }: { text: string }) => {
+    const { resumeData } = useResume();
+    return <>{translateResumeUi(text, resumeData.meta?.language)}</>;
+};
 
 // --- AI COMPARISON MODAL ---
 interface AiCompareModalProps {
@@ -37,7 +43,7 @@ const AiCompareModal = ({ originalText, aiText, onAccept, onReject }: AiCompareM
                 {/* Header */}
                 <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100" style={{ background: 'linear-gradient(90deg,#f5f3ff 0%,#ede9fe 100%)' }}>
                     <Sparkles size={18} className="text-purple-600" />
-                    <span className="font-semibold text-purple-800 text-sm">AI Suggestion — Review Before Applying</span>
+                    <span className="font-semibold text-purple-800 text-sm"><L text="AI Suggestion — Review Before Applying" /></span>
                     <button onClick={onReject} className="ml-auto text-gray-400 hover:text-gray-700 transition-colors"><X size={18} /></button>
                 </div>
 
@@ -45,9 +51,9 @@ const AiCompareModal = ({ originalText, aiText, onAccept, onReject }: AiCompareM
                 <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-0 p-5">
                     {/* Before */}
                     <div className="flex flex-col gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Before</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-400"><L text="Before" /></span>
                         <div className="rounded-lg p-3 text-sm text-gray-600 leading-relaxed min-h-[80px]" style={{ background: '#fafafa', border: '1px solid #e5e7eb' }}>
-                            {originalText || <span className="italic text-gray-300">Empty</span>}
+                            {originalText || <span className="italic text-gray-300"><L text="Empty" /></span>}
                         </div>
                     </div>
 
@@ -60,7 +66,7 @@ const AiCompareModal = ({ originalText, aiText, onAccept, onReject }: AiCompareM
 
                     {/* After */}
                     <div className="flex flex-col gap-2 mt-4 sm:mt-0">
-                        <span className="text-[11px] font-semibold uppercase tracking-widest text-purple-500">AI Version</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-widest text-purple-500"><L text="AI Version" /></span>
                         <div className="rounded-lg p-3 text-sm text-gray-800 leading-relaxed min-h-[80px]" style={{ background: '#faf5ff', border: '1.5px solid #d8b4fe' }}>
                             {aiText}
                         </div>
@@ -73,14 +79,14 @@ const AiCompareModal = ({ originalText, aiText, onAccept, onReject }: AiCompareM
                         onClick={onReject}
                         className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors border border-gray-200"
                     >
-                        <X size={14} /> Keep Original
+                        <X size={14} /> <L text="Keep Original" />
                     </button>
                     <button
                         onClick={onAccept}
                         className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all shadow-md hover:shadow-lg active:scale-95"
                         style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}
                     >
-                        <Check size={14} /> Apply AI Version
+                        <Check size={14} /> <L text="Apply AI Version" />
                     </button>
                 </div>
             </motion.div>
@@ -114,21 +120,21 @@ const AiLimitModal = ({ onClose }: { onClose: () => void }) => (
                     <div className="mx-auto mb-4 w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}>
                         <Zap size={22} className="text-white" />
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900 mb-2">AI Limit Reached</h2>
-                    <p className="text-sm text-gray-500 mb-6">You've used your 3 free AI optimizations. Upgrade to Pro for unlimited AI rewrites.</p>
+                    <h2 className="text-lg font-bold text-gray-900 mb-2"><L text="AI Limit Reached" /></h2>
+                    <p className="text-sm text-gray-500 mb-6"><L text="You've used your 3 free AI optimizations. Upgrade to Pro for unlimited AI rewrites." /></p>
                     <div className="flex flex-col gap-2">
                         <a
                             href="/pricing"
                             className="block w-full py-3 rounded-xl text-white text-sm font-bold text-center transition-all shadow-md hover:shadow-lg"
                             style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}
                         >
-                            View Pro Plans
+                            <L text="View Pro Plans" />
                         </a>
                         <button
                             onClick={onClose}
                             className="w-full py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors"
                         >
-                            Continue Editing
+                            <L text="Continue Editing" />
                         </button>
                     </div>
                 </div>
@@ -164,6 +170,7 @@ const DateInput = ({
     placeholder?: string;
     allowPresent?: boolean;
 }) => {
+    const { resumeData } = useResume();
     const showWarning = value && !isValidDateFormat(value);
 
     return (
@@ -173,11 +180,11 @@ const DateInput = ({
                 className={`w-full p-2 text-sm border rounded-md text-black bg-white placeholder-gray-400 ${showWarning ? 'border-orange-400' : 'border-gray-300'}`}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                placeholder={placeholder}
+                placeholder={translateResumeUi(placeholder, resumeData.meta?.language)}
             />
             {showWarning && (
                 <p className="text-[10px] text-orange-500 mt-1">
-                    Format: {allowPresent ? '01/2022, 2022, or Present' : '01/2022 or 2022'}
+                    {translateResumeUi(allowPresent ? 'Format: 01/2022, 2022, or Present' : 'Format: 01/2022 or 2022', resumeData.meta?.language)}
                 </p>
             )}
         </div>
@@ -196,6 +203,7 @@ const EducationItem = ({
     removeEducation: (id: string) => void;
 }) => {
     const controls = useDragControls();
+    const language = useResume().resumeData.meta?.language;
 
     return (
         <Reorder.Item
@@ -209,14 +217,14 @@ const EducationItem = ({
                 <div
                     onPointerDown={(e) => controls.start(e)}
                     className="cursor-grab text-gray-500 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded p-1.5 touch-none shadow-sm active:cursor-grabbing"
-                    title="Drag to Reorder"
+                    title={translateResumeUi('Drag to Reorder', language)}
                 >
                     <GripVertical size={16} />
                 </div>
                 <button
                     onClick={() => removeEducation(edu.id)}
                     className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                    title="Delete"
+                    title={translateResumeUi('Delete', language)}
                 >
                     <Trash2 size={18} />
                 </button>
@@ -224,27 +232,27 @@ const EducationItem = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">School / University</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="School / University" /></label>
                     <input
                         type="text"
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={edu.school}
                         onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
-                        placeholder="e.g. Harvard University"
+                        placeholder={translateResumeUi('e.g. Harvard University', language)}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">Degree / Major</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="Degree / Major" /></label>
                     <input
                         type="text"
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={edu.degree}
                         onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
-                        placeholder="e.g. Computer Science"
+                        placeholder={translateResumeUi('e.g. Computer Science', language)}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">Start Date</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="Start Date" /></label>
                     <DateInput
                         value={edu.startDate}
                         onChange={(val) => updateEducation(edu.id, 'startDate', val)}
@@ -252,7 +260,7 @@ const EducationItem = ({
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">End Date</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="End Date" /></label>
                     <DateInput
                         value={edu.endDate}
                         onChange={(val) => updateEducation(edu.id, 'endDate', val)}
@@ -299,8 +307,8 @@ export const EducationForm = () => {
     return (
         <div className="space-y-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center justify-between">
-                Education
-                <button onClick={addEducation} className="p-1 rounded-full hover:bg-gray-100 text-blue-600" title="Add Education">
+                <L text="Education" />
+                <button onClick={addEducation} className="p-1 rounded-full hover:bg-gray-100 text-blue-600" title={translateResumeUi('Add Education', resumeData.meta?.language)}>
                     <Plus size={20} />
                 </button>
             </h3>
@@ -317,7 +325,7 @@ export const EducationForm = () => {
             </Reorder.Group>
 
             {resumeData.education.length === 0 && (
-                <div className="text-center py-4 text-gray-400 text-sm">No education added yet.</div>
+                <div className="text-center py-4 text-gray-400 text-sm"><L text="No education added yet." /></div>
             )}
         </div>
     );
@@ -339,6 +347,7 @@ const ExperienceItem = ({
     loading: boolean;
 }) => {
     const controls = useDragControls();
+    const language = useResume().resumeData.meta?.language;
 
     return (
         <Reorder.Item
@@ -352,14 +361,14 @@ const ExperienceItem = ({
                 <div
                     onPointerDown={(e) => controls.start(e)}
                     className="cursor-grab text-gray-500 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded p-1.5 touch-none shadow-sm active:cursor-grabbing"
-                    title="Drag to Reorder"
+                    title={translateResumeUi('Drag to Reorder', language)}
                 >
                     <GripVertical size={16} />
                 </div>
                 <button
                     onClick={() => removeExperience(exp.id)}
                     className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                    title="Delete"
+                    title={translateResumeUi('Delete', language)}
                 >
                     <Trash2 size={18} />
                 </button>
@@ -367,27 +376,27 @@ const ExperienceItem = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">Company</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="Company" /></label>
                     <input
                         type="text"
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={exp.company}
                         onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
-                        placeholder="e.g. Google"
+                        placeholder={translateResumeUi('e.g. Google', language)}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">Position / Title</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="Position / Title" /></label>
                     <input
                         type="text"
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={exp.position}
                         onChange={(e) => updateExperience(exp.id, 'position', e.target.value)}
-                        placeholder="e.g. Software Engineer"
+                        placeholder={translateResumeUi('e.g. Software Engineer', language)}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">Start Date</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="Start Date" /></label>
                     <DateInput
                         value={exp.startDate}
                         onChange={(val) => updateExperience(exp.id, 'startDate', val)}
@@ -395,7 +404,7 @@ const ExperienceItem = ({
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">End Date</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="End Date" /></label>
                     <DateInput
                         value={exp.endDate}
                         onChange={(val) => updateExperience(exp.id, 'endDate', val)}
@@ -405,16 +414,16 @@ const ExperienceItem = ({
                 </div>
                 <div className="md:col-span-2">
                     <div className="flex justify-between items-center mb-1">
-                        <label className="block text-xs font-medium text-black">Description</label>
+                        <label className="block text-xs font-medium text-black"><L text="Description" /></label>
                         <button
                             onClick={() => handleAiRewrite(exp.id, exp.description)}
                             disabled={loading || !exp.description}
                             className="flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-800 disabled:opacity-50 transition-colors bg-purple-50 px-2 py-1 rounded-md"
                         >
                             {loading ? (
-                                <> <Loader2 size={12} className="animate-spin" /> Writing... </>
+                                <> <Loader2 size={12} className="animate-spin" /> <L text="Writing..." /> </>
                             ) : (
-                                <> <Sparkles size={12} /> AI Rewrite </>
+                                <> <Sparkles size={12} /> <L text="AI Rewrite" /> </>
                             )}
                         </button>
                     </div>
@@ -422,7 +431,7 @@ const ExperienceItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md h-24 focus:ring-2 focus:ring-purple-500 transition-all font-mono text-black bg-white placeholder-gray-400"
                         value={exp.description}
                         onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
-                        placeholder="Describe your responsibilities and achievements..."
+                        placeholder={translateResumeUi('Describe your responsibilities and achievements...', language)}
                     />
                 </div>
             </div>
@@ -520,8 +529,8 @@ export const ExperienceForm = () => {
                 />
             )}
             <h3 className="text-lg font-semibold text-gray-800 flex items-center justify-between">
-                Work Experience
-                <button onClick={addExperience} className="p-1 rounded-full hover:bg-gray-100 text-blue-600" title="Add Experience">
+                <L text="Work Experience" />
+                <button onClick={addExperience} className="p-1 rounded-full hover:bg-gray-100 text-blue-600" title={translateResumeUi('Add Experience', resumeData.meta?.language)}>
                     <Plus size={20} />
                 </button>
             </h3>
@@ -540,7 +549,7 @@ export const ExperienceForm = () => {
             </Reorder.Group>
 
             {resumeData.experience.length === 0 && (
-                <div className="text-center py-4 text-gray-400 text-sm">No experience added yet.</div>
+                <div className="text-center py-4 text-gray-400 text-sm"><L text="No experience added yet." /></div>
             )}
         </div>
     );
@@ -562,6 +571,7 @@ const ProjectItem = ({
     loading: boolean;
 }) => {
     const controls = useDragControls();
+    const language = useResume().resumeData.meta?.language;
 
     return (
         <Reorder.Item
@@ -575,14 +585,14 @@ const ProjectItem = ({
                 <div
                     onPointerDown={(e) => controls.start(e)}
                     className="cursor-grab text-gray-500 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded p-1.5 touch-none shadow-sm active:cursor-grabbing"
-                    title="Drag to Reorder"
+                    title={translateResumeUi('Drag to Reorder', language)}
                 >
                     <GripVertical size={16} />
                 </div>
                 <button
                     onClick={() => removeProject(proj.id)}
                     className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                    title="Delete"
+                    title={translateResumeUi('Delete', language)}
                 >
                     <Trash2 size={18} />
                 </button>
@@ -590,37 +600,37 @@ const ProjectItem = ({
 
             <div className="space-y-3">
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">Project Name</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="Project Name" /></label>
                     <input
                         type="text"
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={proj.name}
                         onChange={(e) => updateProject(proj.id, 'name', e.target.value)}
-                        placeholder="e.g. E-Commerce App"
+                        placeholder={translateResumeUi('e.g. E-Commerce App', language)}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">Link (Optional)</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="Link (Optional)" /></label>
                     <input
                         type="text"
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={proj.link}
                         onChange={(e) => updateProject(proj.id, 'link', e.target.value)}
-                        placeholder="e.g. github.com/username/project"
+                        placeholder={translateResumeUi('e.g. github.com/username/project', language)}
                     />
                 </div>
                 <div>
                     <div className="flex justify-between items-center mb-1">
-                        <label className="block text-xs font-medium text-black">Description</label>
+                        <label className="block text-xs font-medium text-black"><L text="Description" /></label>
                         <button
                             onClick={() => handleAiRewrite(proj.id, proj.description)}
                             disabled={loading || !proj.description}
                             className="flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-800 disabled:opacity-50 transition-colors bg-purple-50 px-2 py-1 rounded-md"
                         >
                             {loading ? (
-                                <> <Loader2 size={12} className="animate-spin" /> Writing... </>
+                                <> <Loader2 size={12} className="animate-spin" /> <L text="Writing..." /> </>
                             ) : (
-                                <> <Sparkles size={12} /> AI Rewrite </>
+                                <> <Sparkles size={12} /> <L text="AI Rewrite" /> </>
                             )}
                         </button>
                     </div>
@@ -628,7 +638,7 @@ const ProjectItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md h-20 text-black bg-white placeholder-gray-400"
                         value={proj.description}
                         onChange={(e) => updateProject(proj.id, 'description', e.target.value)}
-                        placeholder="Briefly describe what you built..."
+                        placeholder={translateResumeUi('Briefly describe what you built...', language)}
                     />
                 </div>
             </div>
@@ -726,8 +736,8 @@ export const ProjectsForm = () => {
                 />
             )}
             <h3 className="text-lg font-semibold text-gray-800 flex items-center justify-between">
-                Projects
-                <button onClick={addProject} className="p-1 rounded-full hover:bg-gray-100 text-blue-600" title="Add Project">
+                <L text="Projects" />
+                <button onClick={addProject} className="p-1 rounded-full hover:bg-gray-100 text-blue-600" title={translateResumeUi('Add Project', resumeData.meta?.language)}>
                     <Plus size={20} />
                 </button>
             </h3>
@@ -746,7 +756,7 @@ export const ProjectsForm = () => {
             </Reorder.Group>
 
             {resumeData.projects.length === 0 && (
-                <div className="text-center py-4 text-gray-400 text-sm">No projects added yet.</div>
+                <div className="text-center py-4 text-gray-400 text-sm"><L text="No projects added yet." /></div>
             )}
         </div>
     );
@@ -764,6 +774,7 @@ const CertificateItem = ({
     removeCertificate: (id: string) => void;
 }) => {
     const controls = useDragControls();
+    const language = useResume().resumeData.meta?.language;
 
     return (
         <Reorder.Item
@@ -777,14 +788,14 @@ const CertificateItem = ({
                 <div
                     onPointerDown={(e) => controls.start(e)}
                     className="cursor-grab text-gray-500 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded p-1.5 touch-none shadow-sm active:cursor-grabbing"
-                    title="Drag to Reorder"
+                    title={translateResumeUi('Drag to Reorder', language)}
                 >
                     <GripVertical size={16} />
                 </div>
                 <button
                     onClick={() => removeCertificate(cert.id)}
                     className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                    title="Delete"
+                    title={translateResumeUi('Delete', language)}
                 >
                     <Trash2 size={18} />
                 </button>
@@ -792,27 +803,27 @@ const CertificateItem = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">Certificate Name</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="Certificate Name" /></label>
                     <input
                         type="text"
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={cert.name}
                         onChange={(e) => updateCertificate(cert.id, 'name', e.target.value)}
-                        placeholder="e.g. AWS Solutions Architect"
+                        placeholder={translateResumeUi('e.g. AWS Solutions Architect', language)}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">Issuer</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="Issuer" /></label>
                     <input
                         type="text"
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={cert.issuer}
                         onChange={(e) => updateCertificate(cert.id, 'issuer', e.target.value)}
-                        placeholder="e.g. Amazon Web Services"
+                        placeholder={translateResumeUi('e.g. Amazon Web Services', language)}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">Date</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="Date" /></label>
                     <DateInput
                         value={cert.date}
                         onChange={(val) => updateCertificate(cert.id, 'date', val)}
@@ -820,14 +831,15 @@ const CertificateItem = ({
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-black mb-1">Link (Optional)</label>
+                    <label className="block text-xs font-medium text-black mb-1"><L text="Link (Optional)" /></label>
                     <input
                         type="text"
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={cert.link || ''}
                         onChange={(e) => updateCertificate(cert.id, 'link', e.target.value)}
-                        placeholder="e.g. credential.net/..."
+                        placeholder={translateResumeUi('https://credential.net/verify/...', language)}
                     />
+                    <p className="mt-1 text-xs text-gray-500"><L text="Enter the certificate verification URL. It will appear as a clickable link in the preview and PDF." /></p>
                 </div>
             </div>
         </Reorder.Item>
@@ -868,8 +880,8 @@ export const CertificatesForm = () => {
     return (
         <div className="space-y-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm mt-4">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center justify-between">
-                Certificates
-                <button onClick={addCertificate} className="p-1 rounded-full hover:bg-gray-100 text-blue-600" title="Add Certificate">
+                <L text="Certificates" />
+                <button onClick={addCertificate} className="p-1 rounded-full hover:bg-gray-100 text-blue-600" title={translateResumeUi('Add Certificate', resumeData.meta?.language)}>
                     <Plus size={20} />
                 </button>
             </h3>
@@ -886,7 +898,7 @@ export const CertificatesForm = () => {
             </Reorder.Group>
 
             {resumeData.certificates.length === 0 && (
-                <div className="text-center py-4 text-gray-400 text-sm">No certificates added yet.</div>
+                <div className="text-center py-4 text-gray-400 text-sm"><L text="No certificates added yet." /></div>
             )}
         </div>
     );
@@ -904,6 +916,8 @@ const LanguageItem = ({
     removeLanguage: (id: string) => void;
 }) => {
     const controls = useDragControls();
+    const { resumeData } = useResume();
+    const language = resumeData.meta?.language;
 
     return (
         <Reorder.Item
@@ -916,33 +930,33 @@ const LanguageItem = ({
             <div
                 onPointerDown={(e) => controls.start(e)}
                 className="cursor-grab text-gray-500 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded p-1.5 mb-1 touch-none shadow-sm active:cursor-grabbing"
-                title="Drag to Reorder"
+                title={translateResumeUi('Drag to Reorder', language)}
             >
                 <GripVertical size={16} />
             </div>
 
             <div className="flex-1">
-                <label className="block text-xs font-medium text-black mb-1">Language</label>
+                <label className="block text-xs font-medium text-black mb-1"><L text="Language" /></label>
                 <input
                     type="text"
                     className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                     value={lang.language}
                     onChange={(e) => updateLanguage(lang.id, 'language', e.target.value)}
-                    placeholder="e.g. English, German"
+                    placeholder={translateResumeUi('e.g. English, German', language)}
                 />
             </div>
             <div className="flex-1">
-                <label className="block text-xs font-medium text-black mb-1">Proficiency Level</label>
+                <label className="block text-xs font-medium text-black mb-1"><L text="Proficiency Level" /></label>
                 <select
                     className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white"
                     value={lang.level}
                     onChange={(e) => updateLanguage(lang.id, 'level', e.target.value)}
                 >
-                    <option value="Native">Native</option>
-                    <option value="Fluent">Fluent</option>
-                    <option value="Advanced">Advanced (C1)</option>
-                    <option value="Intermediate">Intermediate (B2)</option>
-                    <option value="Beginner">Beginner (A1/A2)</option>
+                    <option value="Native">{translateResumeUi('Native', language)}</option>
+                    <option value="Fluent">{translateResumeUi('Fluent', language)}</option>
+                    <option value="Advanced">{translateResumeUi('Advanced', language)} (C1)</option>
+                    <option value="Intermediate">{translateResumeUi('Intermediate', language)} (B2)</option>
+                    <option value="Beginner">{translateResumeUi('Beginner', language)} (A1/A2)</option>
                 </select>
             </div>
             <button
@@ -986,8 +1000,8 @@ export const LanguagesForm = () => {
     return (
         <div className="space-y-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm mt-4">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center justify-between">
-                Languages
-                <button onClick={addLanguage} className="p-1 rounded-full hover:bg-gray-100 text-blue-600" title="Add Language">
+                <L text="Languages" />
+                <button onClick={addLanguage} className="p-1 rounded-full hover:bg-gray-100 text-blue-600" title={translateResumeUi('Add Language', resumeData.meta?.language)}>
                     <Plus size={20} />
                 </button>
             </h3>
@@ -1004,7 +1018,7 @@ export const LanguagesForm = () => {
             </Reorder.Group>
 
             {(resumeData.languages || []).length === 0 && (
-                <div className="text-center py-4 text-gray-400 text-sm">No languages added yet.</div>
+                <div className="text-center py-4 text-gray-400 text-sm"><L text="No languages added yet." /></div>
             )}
         </div>
     );

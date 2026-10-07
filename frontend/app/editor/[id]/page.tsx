@@ -31,7 +31,7 @@ export default async function EditResumePage({ params }: { params: Promise<{ id:
         ]);
 
         if (!resume) {
-            return <div className="p-8 text-center text-red-600 font-medium">Özgeçmiş bulunamadı veya erişim yetkiniz yok.</div>;
+            return <div className="p-8 text-center text-red-600 font-medium">Resume not found or you do not have permission to access it.</div>;
         }
 
         const isPremium = userProfile?.isPremium || false;
@@ -47,6 +47,6 @@ export default async function EditResumePage({ params }: { params: Promise<{ id:
         );
     } catch (error: any) {
         console.error("Failed to load resume from FastAPI:", error);
-        return <div className="p-8 text-center text-red-600 font-medium">Özgeçmiş yüklenirken bir hata oluştu: {error?.message || 'Erişim reddedildi'}</div>;
+        return <div className="p-8 text-center text-red-600 font-medium">An error occurred while loading the resume: {error?.message || 'Access denied'}</div>;
     }
 }

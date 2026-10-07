@@ -14,7 +14,7 @@ export default function PricingPage({
             <div className="bg-white border-b border-gray-100 py-4 px-6">
                 <Link href="/" className="flex items-center gap-2 max-w-7xl mx-auto">
                     <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold"><FileText className="text-white" size={20} /></div>
-                    <span className="text-xl font-bold text-gray-900">CV Maker</span>
+                    <span className="text-xl font-bold text-gray-900">Vitascor</span>
                 </Link>
             </div>
 
