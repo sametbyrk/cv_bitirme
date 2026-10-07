@@ -1,0 +1,3 @@
+"""
+Vitascor Backend Application Package.
+"""

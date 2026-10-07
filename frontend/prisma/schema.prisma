@@ -1,0 +1,37 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  isPremium    Boolean  @default(false)
+  aiUsageCount Int      @default(0)
+  aiUsageResetDate DateTime? // For Premium daily reset
+  role         String   @default("user")
+  resumes      Resume[]
+
+  @@map("User")
+}
+
+model Resume {
+  id          String   @id @default(uuid())
+  title       String   @default("Basliksiz Ozgecmis")
+  content     Json
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("resume")
+}

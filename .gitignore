@@ -1,0 +1,108 @@
+# =============================================================================
+# Vitascor Monorepo - Universal Root Git Ignore Configuration
+# =============================================================================
+
+# --- 1. Environment Variables & Secret Files (Root, Frontend, Backend) ---
+.env
+.env.*
+*.env
+*.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+!*.env.example
+!**/.env.example
+
+# Private Keys, Certificates & Credentials
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+id_rsa*
+*service-account*.json
+*credentials*.json
+
+# --- 2. Personal & Academic Documents (KVKK / Privacy) ---
+Bilgi_Formu_*
+*.docx
+*.doc
+*.xlsx
+*.xls
+*.pptx
+*.ppt
+
+# --- 3. Node.js & Frontend (Next.js / React) ---
+node_modules/
+.next/
+out/
+build/
+dist/
+.vercel/
+.turbo/
+coverage/
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+next-env.d.ts
+.pnp
+.pnp.*
+.yarn/*
+!/.yarn/patches
+!/.yarn/plugins
+!/.yarn/releases
+!/.yarn/versions
+
+# --- 4. Python & Backend (FastAPI / SQLAlchemy / Uvicorn) ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local Database Files & SQLite
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+
+# --- 5. Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# --- 6. Operating System & IDE Files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- 7. Legacy Directories & Backup Projects ---
+cv_maker_vercel/
+
+# --- 8. Internal Prompts, Specifications & Scratch Scripts ---
+# (Only keep README.md at root level for a clean public repository)
+/*.md
+!/README.md
+gemini-code-*.md
+
+# Local Test & Debug Scratch Scripts
+backend/test_create_resume.py
+backend/inspect_resume.py
+frontend/list-models.js

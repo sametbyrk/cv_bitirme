@@ -1,0 +1,87 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Her 4 günde bir çalışır (Supabase 7 günde pause olur, güvenli marj)
+    - cron: '0 9 */4 * *'
+  workflow_dispatch: # Manuel tetikleme (test için)
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping keep-alive endpoint (with retries)
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          echo "🔄 Pinging Supabase keep-alive..."
+          
+          if [ -z "$APP_URL" ]; then
+            echo "❌ APP_URL secret is not set!"
+            exit 1
+          fi
+          
+          echo "📡 Target: $APP_URL/api/cron/keep-alive"
+          
+          MAX_ATTEMPTS=4
+          DELAY=10
+          SUCCESS=false
+          
+          # Build auth header if CRON_SECRET is set
+          AUTH_HEADER=""
+          if [ -n "$CRON_SECRET" ]; then
+            AUTH_HEADER="-H \"Authorization: Bearer $CRON_SECRET\""
+            echo "🔑 Using CRON_SECRET for authentication"
+          fi
+          
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "Attempt $i/$MAX_ATTEMPTS..."
+            if [ -n "$CRON_SECRET" ]; then
+              STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+                --max-time 30 \
+                -H "Authorization: Bearer $CRON_SECRET" \
+                "$APP_URL/api/cron/keep-alive")
+            else
+              STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+                --max-time 30 \
+                "$APP_URL/api/cron/keep-alive")
+            fi
+            
+            echo "HTTP Status: $STATUS"
+            echo "Response body:"
+            cat /tmp/response.txt
+            echo ""
+            
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Success on attempt $i!"
+              SUCCESS=true
+              break
+            elif [ "$STATUS" = "401" ]; then
+              echo "⚠️ 401 Unauthorized — CRON_SECRET may be wrong or missing"
+              # Don't treat 401 as success — we want real DB ping
+              echo "Waiting ${DELAY}s before retry..."
+              sleep $DELAY
+              DELAY=$((DELAY * 2))
+            else
+              echo "⚠️ Got status $STATUS, waiting ${DELAY}s before retry..."
+              sleep $DELAY
+              DELAY=$((DELAY * 2))
+            fi
+          done
+          
+          if [ "$SUCCESS" = "false" ]; then
+            echo "❌ All attempts failed"
+            exit 1
+          fi
+
+      - name: Also ping homepage
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+        run: |
+          if [ -n "$APP_URL" ]; then
+            curl -s -o /dev/null -w "Homepage status: %{http_code}\n" --max-time 15 "$APP_URL/"
+            echo "✅ Homepage pinged."
+          else
+            echo "⚠️ APP_URL not set, skipping homepage ping."
+          fi

@@ -1,0 +1,28 @@
+# Python & FastAPI Git Ignore
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Secrets & Environment
+.env
+.env.*
+*.env
+*.env.*
+!.env.example
+
+# Local SQLite / DB
+*.sqlite
+*.sqlite3
+*.db
+
+# Scratch test scripts
+test_create_resume.py
+inspect_resume.py

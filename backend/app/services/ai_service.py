@@ -1,0 +1,180 @@
+"""Gemini-backed copy editing and truthful job-specific resume tailoring."""
+
+import json
+import re
+from typing import Any, Dict, List, Tuple
+
+from fastapi import HTTPException, status
+from google import genai
+from google.genai import types
+from pydantic import ValidationError
+
+from app.core.config import settings
+from app.schemas.ai import (
+    OptimizeRequest,
+    OptimizeResponse,
+    SingleFieldOptimizeRequest,
+    SingleFieldOptimizeResponse,
+)
+from app.schemas.resume import ResumeContent
+
+
+class AIService:
+    MODEL = "gemini-2.0-flash"
+
+    def __init__(self) -> None:
+        self._client = genai.Client(api_key=settings.GEMINI_API_KEY) if settings.GEMINI_API_KEY else None
+
+    def _get_client(self):
+        if self._client is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="AI servisi yapılandırılmamış. GEMINI_API_KEY ayarını kontrol edin.",
+            )
+        return self._client
+
+    async def _generate(self, prompt: str, *, json_mode: bool = False) -> str:
+        try:
+            response = await self._get_client().aio.models.generate_content(
+                model=self.MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.2,
+                    response_mime_type="application/json" if json_mode else "text/plain",
+                ),
+            )
+            text = response.text
+            if not text:
+                raise ValueError("Gemini boş yanıt döndürdü.")
+            return text.strip()
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="AI sağlayıcısından yanıt alınamadı.",
+            ) from exc
+
+    async def optimize_single_field(
+        self, request: SingleFieldOptimizeRequest
+    ) -> SingleFieldOptimizeResponse:
+        prompt = f"""Sen profesyonel CV metin editörüsün. Yalnızca aşağıdaki kaynak metni yeniden ifade et.
+Kaynakta bulunmayan başarı, ölçüm, sorumluluk veya teknoloji ekleme. Gerçekleri değiştirme.
+Tür: {request.type}
+Hedef dil: {request.target_language or 'tr'}
+Metin:
+<source>
+{request.text}
+</source>
+Yalnızca iyileştirilmiş metni döndür; açıklama veya başlık ekleme."""
+        return SingleFieldOptimizeResponse(optimizedText=await self._generate(prompt))
+
+    async def auto_tailor_resume(self, request: OptimizeRequest) -> OptimizeResponse:
+        try:
+            content = ResumeContent.model_validate(request.resume_content or {})
+        except ValidationError as exc:
+            raise HTTPException(status_code=422, detail="CV içeriği geçersiz.") from exc
+
+        original = content.model_dump(by_alias=True, mode="json", exclude_none=False)
+        language_names = {"tr": "Turkish", "en": "English", "de": "German", "es": "Spanish", "fr": "French"}
+        target_language = language_names.get((request.target_language or "en").lower(), request.target_language or "English")
+        prompt = f"""You are a professional resume editor. Write revised resume text in {target_language}.
+KESİN KURALLAR:
+- Yalnızca verilen CV'de kanıtı bulunan bilgi ve teknolojileri kullan; yeni beceri, sonuç, metrik, iş veya eğitim uydurma.
+- İlanın dili ve terimleriyle eşleşen mevcut deneyimleri öne çıkar; adayın deneyim sınırlarını koru.
+- Tüm nesne/listelerin yapısını ve mevcut tüm id değerlerini aynen koru.
+- Yalnızca personalInfo.summary, experience[*].description/highlights ve projects[*].description alanlarını değiştirebilirsin.
+- Diğer tüm alanları ve alan değerlerini aynen koru.
+- "suggested_skills" listesinde yalnızca CV'nin başka bir bölümünde açıkça geçen ve mevcut skills listesinde olmayan becerileri öner. Kanıtı olmayan beceri ekleme.
+- Çıktı JSON nesnesi olsun: {{"updated_content": {{...tam CV...}}, "tailoring_notes": ["..."], "suggested_skills": ["..."]}}
+İş ilanı:
+<job_description>
+{request.job_description}
+</job_description>
+CV JSON:
+{json.dumps(original, ensure_ascii=False)}"""
+        raw = await self._generate(prompt, json_mode=True)
+        try:
+            parsed = _parse_json_object(raw)
+            updated = ResumeContent.model_validate(parsed["updated_content"])
+            updated_dict = updated.model_dump(by_alias=True, mode="json", exclude_none=False)
+            notes = parsed.get("tailoring_notes", [])
+            if not isinstance(notes, list) or not all(isinstance(note, str) for note in notes):
+                notes = []
+            suggestions = parsed.get("suggested_skills", [])
+            if not isinstance(suggestions, list) or not all(isinstance(item, str) for item in suggestions):
+                suggestions = []
+            source_text = json.dumps(original, ensure_ascii=False).casefold()
+            existing_skills = {str(item.get("name") if isinstance(item, dict) else item).casefold() for item in original.get("skills", [])}
+            suggestions = [
+                skill.strip() for skill in suggestions
+                if skill.strip().casefold() in source_text and skill.strip().casefold() not in existing_skills
+            ]
+        except (json.JSONDecodeError, KeyError, TypeError, ValidationError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="AI servisi beklenen CV JSON biçimini döndürmedi.",
+            ) from exc
+
+        # LLM yanıtında izin verilmeyen alan değişikliklerini ve ID kayıplarını
+        # engellemek için yalnızca izinli metin alanlarını kaynak nesneye aktar.
+        sanitized, changed = _apply_allowed_edits(original, updated_dict)
+        return OptimizeResponse(
+            updatedContent=sanitized,
+            changedFields=changed,
+            tailoringNotes=notes,
+            suggestedSkills=suggestions,
+        )
+
+
+def _apply_allowed_edits(original: Dict[str, Any], updated: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
+    result = json.loads(json.dumps(original, ensure_ascii=False))
+    changed: List[str] = []
+
+    def replace(path: str, target: Dict[str, Any], source: Dict[str, Any], key: str) -> None:
+        new_value = source.get(key)
+        if isinstance(new_value, type(target.get(key))) and new_value != target.get(key):
+            target[key] = new_value
+            changed.append(path)
+
+    original_personal = original.get("personalInfo", {})
+    updated_personal = updated.get("personalInfo", {})
+    if isinstance(original_personal, dict) and isinstance(updated_personal, dict):
+        replace("personalInfo.summary", result["personalInfo"], updated_personal, "summary")
+
+    for section, fields in (("experience", ("description", "highlights")), ("projects", ("description",))):
+        original_items = original.get(section, [])
+        updated_items = updated.get(section, [])
+        if not isinstance(original_items, list) or not isinstance(updated_items, list):
+            continue
+        by_id = {item.get("id"): item for item in updated_items if isinstance(item, dict) and item.get("id")}
+        position_edits = [item for item in updated_items if isinstance(item, dict)]
+        for index, target in enumerate(result.get(section, [])):
+            if not isinstance(target, dict):
+                continue
+            if target.get("id"):
+                source = by_id.get(target.get("id"))
+            else:
+                source = position_edits[index] if index < len(position_edits) else None
+            if source is None:
+                continue
+            for field in fields:
+                path = f"{section}[{index}].{field}"
+                replace(path, target, source, field)
+    return result, changed
+
+
+ai_service = AIService()
+
+
+def _parse_json_object(raw: str) -> Dict[str, Any]:
+    """Parse Gemini JSON, tolerating optional Markdown code fences."""
+    text = raw.strip()
+    fenced = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", text, flags=re.IGNORECASE | re.DOTALL)
+    if fenced:
+        text = fenced.group(1).strip()
+
+    parsed = json.loads(text)
+    if not isinstance(parsed, dict):
+        raise TypeError("Gemini JSON yanıtı nesne olmalıdır.")
+    return parsed

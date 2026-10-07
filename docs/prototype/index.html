@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="description" content="Explore the Vitascor resume platform architecture, Auto-Tailor flow, data model, and roadmap." />
+  <title>Vitascor · Interactive Project Tour</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1020;--panel:#111a2d;--line:#26344d;--muted:#9aabc4;--text:#f3f6fc;--blue:#82a5ff;--mint:#50d8b2}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% 0%,#182748 0,transparent 42%),var(--bg);color:var(--text);font:16px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    a{color:inherit}.shell{max-width:1200px;margin:auto;padding:32px 24px 64px}.top{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:68px}.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:800;letter-spacing:.02em}.mark{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#3275ff,#7657ea);font-size:21px;box-shadow:0 8px 28px #3159c64a}.github{border:1px solid var(--line);border-radius:999px;padding:10px 16px;text-decoration:none;color:#cfdaec;font-size:14px}.hero{max-width:850px;margin-bottom:34px}.eyebrow{color:var(--mint);font-size:12px;font-weight:800;letter-spacing:.17em;text-transform:uppercase}.hero h1{font-size:clamp(42px,7vw,76px);line-height:1.02;letter-spacing:-.055em;margin:16px 0 20px}.hero p{color:var(--muted);font-size:18px;max-width:720px;margin:0}.tabs{display:flex;gap:8px;overflow:auto;padding:8px 0 16px;margin:24px 0 12px}.tab{white-space:nowrap;cursor:pointer;border:1px solid var(--line);color:#c3cee0;background:#111a2d;border-radius:999px;padding:11px 16px;font:inherit;font-size:14px;transition:.2s}.tab:hover,.tab[aria-selected=true]{color:#fff;background:#223251;border-color:#5471a2}.tab[aria-selected=true]{box-shadow:inset 0 0 0 1px #5471a2}.viewer{background:linear-gradient(145deg,#111a2b,#0f1728);border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 30px 90px #0005}.viewer-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 24px;border-bottom:1px solid var(--line)}.viewer-head h2{font-size:18px;margin:0}.viewer-head p{color:var(--muted);font-size:13px;margin:4px 0 0}.counter{color:#adbbd0;font-size:13px;font-variant-numeric:tabular-nums}.art{padding:clamp(12px,3vw,30px);background:linear-gradient(135deg,#0d1422,#111b2e)}.art img{display:block;width:100%;height:auto;border-radius:13px}.viewer-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 24px;border-top:1px solid var(--line)}.caption{color:var(--muted);font-size:13px}.controls{display:flex;gap:8px}.control{cursor:pointer;border:1px solid var(--line);border-radius:10px;background:#17233a;color:#eff4ff;padding:9px 14px;font:inherit;font-size:13px}.control:hover{border-color:#6985b7}.below{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}.tile{background:#10192a;border:1px solid var(--line);border-radius:18px;padding:19px}.tile b{display:block;margin-bottom:7px}.tile p{margin:0;color:var(--muted);font-size:14px}.footer{display:flex;justify-content:space-between;gap:16px;margin-top:55px;border-top:1px solid var(--line);padding-top:22px;color:#8293ad;font-size:13px}.footer a{text-decoration:none;color:#c4d3eb}.slide[hidden]{display:none}@media(max-width:720px){.top{margin-bottom:48px}.below{grid-template-columns:1fr}.viewer-head,.viewer-foot{padding:16px}.footer{flex-direction:column}.shell{padding-inline:16px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="top">
+      <a class="brand" href="#top"><span class="mark">V</span><span>VITASCOR</span></a>
+      <a class="github" href="https://github.com/sametbyrk/cv_bitirme" target="_blank" rel="noreferrer">Project repository ↗</a>
+    </header>
+    <section class="hero" id="top">
+      <div class="eyebrow">Resume creation · AI-assisted tailoring</div>
+      <h1>A better story for every application.</h1>
+      <p>Take a quick tour through Vitascor: how the product is structured, how candidate-reviewed tailoring works, and what is planned next.</p>
+    </section>
+    <nav class="tabs" role="tablist" aria-label="Project tour">
+      <button class="tab" role="tab" aria-selected="true" data-slide="0">🏛️ Architecture</button>
+      <button class="tab" role="tab" aria-selected="false" data-slide="1">✨ Auto-Tailor</button>
+      <button class="tab" role="tab" aria-selected="false" data-slide="2">🧩 Resume model</button>
+      <button class="tab" role="tab" aria-selected="false" data-slide="3">🗺️ Roadmap</button>
+    </nav>
+    <section class="viewer" aria-live="polite">
+      <div class="viewer-head"><div><h2 id="slide-title">Platform architecture</h2><p id="slide-summary">The services behind the resume editor and AI-assisted rewrite.</p></div><span class="counter" id="counter">01 / 04</span></div>
+      <div class="art">
+        <figure class="slide"><img src="../assets/architecture.svg" alt="Vitascor platform architecture diagram" /></figure>
+        <figure class="slide" hidden><img src="../assets/auto-tailor-flow.svg" alt="Candidate-reviewed Auto-Tailor workflow diagram" /></figure>
+        <figure class="slide" hidden><img src="../assets/resume-data-model.svg" alt="Structured resume data model diagram" /></figure>
+        <figure class="slide" hidden><img src="../assets/roadmap.svg" alt="Vitascor project roadmap diagram" /></figure>
+      </div>
+      <div class="viewer-foot"><span class="caption" id="caption">A connected web app, API, database, and AI service.</span><div class="controls"><button class="control" id="previous" type="button">← Previous</button><button class="control" id="next" type="button">Next →</button></div></div>
+    </section>
+    <section class="below" aria-label="Project principles">
+      <article class="tile"><b>🧭 Candidate stays in control</b><p>AI suggestions are reviewed before they are applied to the resume.</p></article>
+      <article class="tile"><b>🧱 Structured by design</b><p>Resume details are edited as reusable sections, not a single block of text.</p></article>
+      <article class="tile"><b>🔬 Built in phases</b><p>Resume creation and tailoring come first; hybrid ATS scoring is a planned next phase.</p></article>
+    </section>
+    <footer class="footer"><span>Vitascor · Project tour</span><a href="https://github.com/sametbyrk/cv_bitirme#readme">Back to README ↑</a></footer>
+  </main>
+  <script>
+    const slides = [
+      { title: 'Platform architecture', summary: 'The services behind the resume editor and AI-assisted rewrite.', caption: 'A connected web app, API, database, and AI service.' },
+      { title: 'Auto-Tailor workflow', summary: 'From job description to candidate-approved resume edits.', caption: 'Review changes before applying them. The original stays in place until acceptance.' },
+      { title: 'Structured resume model', summary: 'A resume is made of sections the candidate can manage independently.', caption: 'Stable item IDs and structured content keep editing predictable.' },
+      { title: 'Roadmap', summary: 'A phased path from resume creation to explainable job matching.', caption: 'Hybrid ATS scoring and dataset calibration are planned future work.' },
+    ];
+    let active = 0;
+    const tabs = [...document.querySelectorAll('.tab')];
+    const figures = [...document.querySelectorAll('.slide')];
+    function show(index) {
+      active = (index + slides.length) % slides.length;
+      tabs.forEach((tab, i) => tab.setAttribute('aria-selected', String(i === active)));
+      figures.forEach((figure, i) => figure.hidden = i !== active);
+      document.querySelector('#slide-title').textContent = slides[active].title;
+      document.querySelector('#slide-summary').textContent = slides[active].summary;
+      document.querySelector('#caption').textContent = slides[active].caption;
+      document.querySelector('#counter').textContent = `${String(active + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+    }
+    tabs.forEach(tab => tab.addEventListener('click', () => show(Number(tab.dataset.slide))));
+    document.querySelector('#previous').addEventListener('click', () => show(active - 1));
+    document.querySelector('#next').addEventListener('click', () => show(active + 1));
+    document.addEventListener('keydown', event => { if (event.key === 'ArrowRight') show(active + 1); if (event.key === 'ArrowLeft') show(active - 1); });
+  </script>
+</body>
+</html>
