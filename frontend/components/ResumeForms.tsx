@@ -15,7 +15,7 @@ const L = ({ text }: { text: string }) => {
 interface AiCompareModalProps {
     originalText: string;
     aiText: string;
-    onAccept: () => void;
+    onAccept: () => Promise<void> | void;
     onReject: () => void;
 }
 
@@ -433,6 +433,7 @@ const ExperienceItem = ({
                         onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
                         placeholder={translateResumeUi('Describe your responsibilities and achievements...', language)}
                     />
+                    <p className="mt-1 text-[11px] text-gray-500">ℹ️ {translateResumeUi('Each successful AI generation uses 1 AI credit, even if you discard the suggestion.', language)}</p>
                 </div>
             </div>
         </Reorder.Item>
@@ -640,6 +641,7 @@ const ProjectItem = ({
                         onChange={(e) => updateProject(proj.id, 'description', e.target.value)}
                         placeholder={translateResumeUi('Briefly describe what you built...', language)}
                     />
+                    <p className="mt-1 text-[11px] text-gray-500">ℹ️ {translateResumeUi('Each successful AI generation uses 1 AI credit, even if you discard the suggestion.', language)}</p>
                 </div>
             </div>
         </Reorder.Item>

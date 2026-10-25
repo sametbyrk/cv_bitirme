@@ -16,6 +16,9 @@ export async function POST(request: Request) {
             jobDescription: body.jobDescription,
             resumeContent: body.currentResume,
             targetLanguage: body.targetLanguage,
+            userFeedback: body.userFeedback,
+            previousTailoredContent: body.previousTailoredContent,
+            iterationCount: body.iterationCount ?? 0,
         });
         return NextResponse.json(result);
     } catch (error) {

@@ -70,13 +70,28 @@ class OptimizeRequest(BaseModel):
 
     resume_id: Optional[str] = Field(default=None, alias="resumeId")
     resume_content: Optional[Dict[str, Any]] = Field(default=None, alias="resumeContent")  # kaydedilmemiş taslak desteği
-    job_description: str = Field(min_length=10, alias="jobDescription")
+    job_description: str = Field(min_length=30, alias="jobDescription", description="Hedef iş ilanı metni")
     target_language: Optional[str] = Field(default="en", alias="targetLanguage")
+    user_feedback: Optional[str] = Field(default=None, alias="userFeedback", min_length=1, max_length=4000)
+    previous_tailored_content: Optional[Dict[str, Any]] = Field(
+        default=None, alias="previousTailoredContent"
+    )
+    iteration_count: int = Field(default=0, alias="iterationCount", ge=0)
 
     @model_validator(mode="after")
     def check_resume_source(self):
         if not self.resume_id and not self.resume_content:
             raise ValueError("En az bir 'resume_id' veya 'resume_content' sağlanmalıdır.")
+        has_feedback = self.user_feedback is not None
+        has_previous = self.previous_tailored_content is not None
+        if has_feedback != has_previous:
+            raise ValueError("Kullanıcı geri bildirimi ve önceki CV taslağı birlikte sağlanmalıdır.")
+        if has_feedback and not self.user_feedback.strip():
+            raise ValueError("Kullanıcı geri bildirimi boş olamaz.")
+        if not has_feedback and self.iteration_count != 0:
+            raise ValueError("İlk uyarlamada iterationCount sıfır olmalıdır.")
+        if has_feedback and self.iteration_count < 1:
+            raise ValueError("Geri bildirimli revizyonda iterationCount en az 1 olmalıdır.")
         return self
 
 
@@ -87,6 +102,7 @@ class OptimizeResponse(BaseModel):
     changed_fields: List[str] = Field(alias="changedFields")  # şeffaflık: hangi alanlar değişti
     tailoring_notes: List[str] = Field(default_factory=list, alias="tailoringNotes")
     suggested_skills: List[str] = Field(default_factory=list, alias="suggestedSkills")
+    iteration_count: int = Field(default=1, alias="iterationCount", ge=1)
 
 
 # --- İlan eşleştirme / ATS skorlama ---

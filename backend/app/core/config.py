@@ -4,6 +4,7 @@ Reads from .env using pydantic-settings.
 """
 
 from typing import List, Optional
+from pathlib import Path
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator
@@ -13,7 +14,7 @@ class Settings(BaseSettings):
     """Vitascor API Ayarları ve Ortam Değişkenleri."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=Path(__file__).resolve().parents[2] / ".env",
         env_file_encoding="utf-8",
         extra="ignore"
     )
@@ -40,6 +41,7 @@ class Settings(BaseSettings):
 
     # Google Gemini API
     GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-3.5-flash-lite"
 
     # Upstash Redis (Dağıtık Rate Limiting için)
     UPSTASH_REDIS_REST_URL: Optional[str] = None

@@ -331,6 +331,15 @@ const readChangedField = (resume: any, path: string): string => {
     return Array.isArray(value) ? value.join(', ') : String(value ?? '');
 };
 
+type PendingTailorDraft = {
+    updated: any;
+    changedFields: string[];
+    tailoringNotes: string[];
+    suggestedSkills: string[];
+    jobDescription: string;
+    iterationCount: number;
+};
+
 export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: string }) => {
     const { resumeData, setResumeData } = useResume();
     const ui = (text: string) => translateResumeUi(text, resumeData.meta?.language);
@@ -344,13 +353,9 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
     // Auto-Tailor Modal State
     const [isJobModalOpen, setIsJobModalOpen] = useState(false);
     const [jobDescriptionInput, setJobDescriptionInput] = useState("");
+    const [tailorFeedback, setTailorFeedback] = useState("");
     const [isTailoring, setIsTailoring] = useState(false);
-    const [pendingTailor, setPendingTailor] = useState<{
-        updated: any;
-        changedFields: string[];
-        tailoringNotes: string[];
-        suggestedSkills: string[];
-    } | null>(null);
+    const [pendingTailor, setPendingTailor] = useState<PendingTailorDraft | null>(null);
 
     // Read URL params for template selection
     const searchParams = useSearchParams();
@@ -365,16 +370,22 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
         }
     }, [searchParams, setResumeData]);
 
-    const handleJobTailor = async () => {
+    const handleJobTailor = async (previousDraft?: PendingTailorDraft) => {
+        const jobDescription = previousDraft?.jobDescription ?? jobDescriptionInput;
+        const feedback = previousDraft ? tailorFeedback.trim() : "";
+        if (previousDraft && !feedback) return;
         setIsTailoring(true);
         try {
             const response = await fetch('/api/ai/tailor', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    jobDescription: jobDescriptionInput,
+                    jobDescription,
                     currentResume: resumeData,
                     targetLanguage: resumeData.meta?.language || 'en',
+                    userFeedback: previousDraft ? feedback : undefined,
+                    previousTailoredContent: previousDraft?.updated,
+                    iterationCount: previousDraft?.iterationCount ?? 0,
                 })
             });
 
@@ -391,8 +402,11 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
                 changedFields: data.changedFields || [],
                 tailoringNotes: data.tailoringNotes || [],
                 suggestedSkills: data.suggestedSkills || [],
+                jobDescription,
+                iterationCount: data.iterationCount || (previousDraft?.iterationCount ?? 0) + 1,
             });
-            setIsJobModalOpen(false);
+            setTailorFeedback("");
+            if (!previousDraft) setIsJobModalOpen(false);
         } catch (e: any) {
             console.error("Tailor Error:", e);
             alert("Failed to tailor resume: " + e.message);
@@ -581,6 +595,7 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
                         <p className="text-xs text-indigo-100 mb-4">
                             {ui('Paste Job Description to optimize. Language:')} <span className="font-bold">{selectedLanguageName}</span>
                         </p>
+                        <p className="text-xs text-indigo-100 mb-3">ℹ️ {ui('Each successful AI generation uses 1 AI credit, even if you discard the suggestion.')}</p>
                         <button
                             onClick={() => setIsJobModalOpen(true)}
                             className="w-full bg-white text-indigo-600 font-bold py-2 rounded shadow hover:bg-indigo-50 transition text-sm"
@@ -599,6 +614,7 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
                                 <p className="text-sm text-gray-600 mb-4">
                                     {ui('Paste the job description or internship details here. We will optimize your CV to match their requirements in')} <span className="font-bold">{selectedLanguageName}</span>.
                                 </p>
+                                <p className="text-xs text-amber-700 bg-amber-50 rounded-md p-2 mb-3">ℹ️ {ui('Each successful AI generation uses 1 AI credit, even if you discard the suggestion.')}</p>
                                 <textarea
                                     className="w-full h-40 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 mb-4 text-black"
                                     placeholder={ui('Paste job description here...')}
@@ -616,7 +632,7 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
                                         {ui('Cancel')}
                                     </button>
                                     <button
-                                        onClick={handleJobTailor}
+                                        onClick={() => { void handleJobTailor(); }}
                                         disabled={isTailoring || jobDescriptionInput.length < 50}
                                         className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-bold shadow hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                     >
@@ -633,6 +649,7 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
                                 <div className="p-5 border-b">
                                     <h3 className="text-xl font-bold text-gray-900">Review resume changes</h3>
                                     <p className="text-sm text-gray-600 mt-1">Nothing is applied until you accept. Closing this preview discards the suggestions.</p>
+                                    <p className="text-xs text-gray-500 mt-2">{ui('Iteration')}: {pendingTailor.iterationCount} · {ui('Each successful AI generation uses 1 AI credit, even if you discard the suggestion.')}</p>
                                 </div>
                                 <div className="p-5 overflow-y-auto space-y-5">
                                     {pendingTailor.changedFields.map((path) => (
@@ -668,9 +685,29 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
                                             </ul>
                                         </section>
                                     )}
+                                    <section className="rounded-lg border border-indigo-200 p-4 space-y-3">
+                                        <label htmlFor="tailor-feedback" className="block font-semibold text-sm text-gray-800">{ui('Tell us what you want changed in this draft...')}</label>
+                                        <textarea
+                                            id="tailor-feedback"
+                                            value={tailorFeedback}
+                                            onChange={(event) => setTailorFeedback(event.target.value)}
+                                            maxLength={4000}
+                                            rows={3}
+                                            className="w-full border border-gray-300 rounded-lg p-3 text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500"
+                                            placeholder={ui('Tell us what you want changed in this draft...')}
+                                            disabled={isTailoring}
+                                        />
+                                        <button
+                                            onClick={() => handleJobTailor(pendingTailor)}
+                                            disabled={isTailoring || !tailorFeedback.trim()}
+                                            className="px-4 py-2 bg-indigo-100 text-indigo-800 rounded-lg font-semibold hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {isTailoring ? ui('Revising...') : ui('Revise with feedback')}
+                                        </button>
+                                    </section>
                                 </div>
                                 <div className="p-4 border-t flex justify-end gap-3">
-                                    <button onClick={() => setPendingTailor(null)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Discard</button>
+                                    <button onClick={() => { setPendingTailor(null); setTailorFeedback(''); }} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Discard</button>
                                     <button onClick={acceptTailorChanges} className="px-5 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700">Accept changes</button>
                                 </div>
                             </div>

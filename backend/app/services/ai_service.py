@@ -20,7 +20,7 @@ from app.schemas.resume import ResumeContent
 
 
 class AIService:
-    MODEL = "gemini-2.0-flash"
+    MODEL = settings.GEMINI_MODEL
 
     def __init__(self) -> None:
         self._client = genai.Client(api_key=settings.GEMINI_API_KEY) if settings.GEMINI_API_KEY else None
@@ -58,10 +58,16 @@ class AIService:
     async def optimize_single_field(
         self, request: SingleFieldOptimizeRequest
     ) -> SingleFieldOptimizeResponse:
+        language_names = {
+            "tr": "Turkish", "en": "English", "de": "German",
+            "es": "Spanish", "fr": "French",
+        }
+        language_code = (request.target_language or "tr").lower()
+        target_language = language_names.get(language_code, request.target_language or "Turkish")
         prompt = f"""Sen profesyonel CV metin editörüsün. Yalnızca aşağıdaki kaynak metni yeniden ifade et.
 Kaynakta bulunmayan başarı, ölçüm, sorumluluk veya teknoloji ekleme. Gerçekleri değiştirme.
 Tür: {request.type}
-Hedef dil: {request.target_language or 'tr'}
+Hedef dil: {target_language}
 Metin:
 <source>
 {request.text}
@@ -76,23 +82,46 @@ Yalnızca iyileştirilmiş metni döndür; açıklama veya başlık ekleme."""
             raise HTTPException(status_code=422, detail="CV içeriği geçersiz.") from exc
 
         original = content.model_dump(by_alias=True, mode="json", exclude_none=False)
+        previous_draft = None
+        if request.previous_tailored_content is not None:
+            try:
+                previous_draft = ResumeContent.model_validate(
+                    request.previous_tailored_content
+                ).model_dump(by_alias=True, mode="json", exclude_none=False)
+            except ValidationError as exc:
+                raise HTTPException(status_code=422, detail="Önceki CV taslağı geçersiz.") from exc
+
         language_names = {"tr": "Turkish", "en": "English", "de": "German", "es": "Spanish", "fr": "French"}
         target_language = language_names.get((request.target_language or "en").lower(), request.target_language or "English")
         prompt = f"""You are a professional resume editor. Write revised resume text in {target_language}.
-KESİN KURALLAR:
-- Yalnızca verilen CV'de kanıtı bulunan bilgi ve teknolojileri kullan; yeni beceri, sonuç, metrik, iş veya eğitim uydurma.
-- İlanın dili ve terimleriyle eşleşen mevcut deneyimleri öne çıkar; adayın deneyim sınırlarını koru.
+SABİT ETİK VE DOĞRULUK KURALLARI:
+- Orijinal CV tek doğruluk kaynağıdır. CV'de kanıtı olmayan staj, teknoloji, beceri, görev, başarı, metrik, iş veya eğitim ekleme.
+- Kullanıcı geri bildirimi orijinal CV ile çelişirse geri bildirimi uygulama; gerçek deneyim sınırını koru.
+- İlandaki gereksinimleri belirle ve yalnızca adayın CV'sinde kanıtı bulunan gereksinimleri öne çıkar.
 - Tüm nesne/listelerin yapısını ve mevcut tüm id değerlerini aynen koru.
 - Yalnızca personalInfo.summary, experience[*].description/highlights ve projects[*].description alanlarını değiştirebilirsin.
 - Diğer tüm alanları ve alan değerlerini aynen koru.
-- "suggested_skills" listesinde yalnızca CV'nin başka bir bölümünde açıkça geçen ve mevcut skills listesinde olmayan becerileri öner. Kanıtı olmayan beceri ekleme.
+- "suggested_skills" listesinde yalnızca CV'nin başka bir bölümünde açıkça geçen ve mevcut skills listesinde olmayan becerileri öner.
 - Çıktı JSON nesnesi olsun: {{"updated_content": {{...tam CV...}}, "tailoring_notes": ["..."], "suggested_skills": ["..."]}}
 İş ilanı:
 <job_description>
 {request.job_description}
 </job_description>
-CV JSON:
+Orijinal CV JSON (tek doğruluk kaynağı):
 {json.dumps(original, ensure_ascii=False)}"""
+        if previous_draft is not None and request.user_feedback is not None:
+            prompt += f"""
+Önceki taslak ve kullanıcı geri bildirimi:
+<previous_tailored_content>
+{json.dumps(previous_draft, ensure_ascii=False)}
+</previous_tailored_content>
+<user_feedback>
+{request.user_feedback}
+</user_feedback>
+Önceki taslağı ve kullanıcı geri bildirimini dikkate alarak yeniden düzenle. Orijinal CV'de kanıtlanmayan hiçbir bilgiyi ekleme. Çıktı yapısını ve izin verilen alanları koru."""
+        else:
+            prompt += "\nİlk uyarlamayı orijinal CV ve iş ilanına göre yap."
+        prompt += "\nCV taslağı JSON'u:\n" + json.dumps(previous_draft or original, ensure_ascii=False)
         raw = await self._generate(prompt, json_mode=True)
         try:
             parsed = _parse_json_object(raw)
@@ -124,6 +153,7 @@ CV JSON:
             changedFields=changed,
             tailoringNotes=notes,
             suggestedSkills=suggestions,
+            iterationCount=request.iteration_count + 1,
         )
 
 

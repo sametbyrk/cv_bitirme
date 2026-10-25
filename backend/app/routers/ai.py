@@ -41,9 +41,9 @@ async def _get_or_create_user(db: AsyncSession, current_user: CurrentUser) -> Us
     return user
 
 
-async def _reserve_ai_usage(db: AsyncSession, current_user: CurrentUser) -> None:
+async def _lock_ai_user(db: AsyncSession, current_user: CurrentUser) -> User:
     user = await _get_or_create_user(db, current_user)
-    await guard_service.check_and_increment_quota(db, current_user.id, user.isPremium)
+    return await guard_service.lock_and_check_quota(db, user.id)
 
 
 def _parse_content(raw: Any) -> Dict[str, Any]:
@@ -67,8 +67,11 @@ async def optimize_field(
     current_user: CurrentUser = Depends(get_current_user),
 ) -> SingleFieldOptimizeResponse:
     guard_service.check_prompt_injection(body.text)
-    await _reserve_ai_usage(db, current_user)
-    return await ai_service.optimize_single_field(body)
+    user = await _lock_ai_user(db, current_user)
+    response = await ai_service.optimize_single_field(body)
+    user.aiUsageCount += 1
+    await db.commit()
+    return response
 
 
 @router.post(
@@ -82,6 +85,13 @@ async def tailor_resume(
     current_user: CurrentUser = Depends(get_current_user),
 ) -> OptimizeResponse:
     guard_service.check_prompt_injection(body.job_description)
+    if body.user_feedback:
+        guard_service.check_prompt_injection(body.user_feedback)
+    if body.previous_tailored_content is not None:
+        guard_service.check_prompt_injection(
+            json.dumps(body.previous_tailored_content, ensure_ascii=False)
+        )
+    user = await _lock_ai_user(db, current_user)
 
     content: Dict[str, Any]
     if body.resume_id:
@@ -108,10 +118,15 @@ async def tailor_resume(
     except Exception as exc:
         raise HTTPException(status_code=422, detail="CV içeriği geçersiz.") from exc
 
-    await _reserve_ai_usage(db, current_user)
     service_request = OptimizeRequest(
         resumeContent=normalized,
         jobDescription=body.job_description,
         targetLanguage=body.target_language,
+        userFeedback=body.user_feedback,
+        previousTailoredContent=body.previous_tailored_content,
+        iterationCount=body.iteration_count,
     )
-    return await ai_service.auto_tailor_resume(service_request)
+    response = await ai_service.auto_tailor_resume(service_request)
+    user.aiUsageCount += 1
+    await db.commit()
+    return response

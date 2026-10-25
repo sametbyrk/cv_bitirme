@@ -29,36 +29,23 @@ class GuardService:
             )
 
     @staticmethod
-    async def check_and_increment_quota(
-        db: AsyncSession, user_id: str, is_premium: bool
-    ) -> None:
+    async def lock_and_check_quota(db: AsyncSession, user_id: str) -> User:
         result = await db.execute(
             select(User).where(User.id == user_id).with_for_update()
         )
         user = result.scalar_one_or_none()
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Kullanıcı profili bulunamadı.",
-            )
-
-        now = datetime.now(timezone.utc)
+            raise HTTPException(status_code=404, detail="Kullanıcı profili bulunamadı.")
         reset_at = user.aiUsageResetDate
         if reset_at is not None:
             if reset_at.tzinfo is None:
                 reset_at = reset_at.replace(tzinfo=timezone.utc)
-            if reset_at <= now:
+            if reset_at <= datetime.now(timezone.utc):
                 user.aiUsageCount = 0
                 user.aiUsageResetDate = None
-
-        if not is_premium and user.aiUsageCount >= settings.FREE_AI_LIMIT:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Aylık ücretsiz AI kullanım kotanız dolmuştur.",
-            )
-
-        user.aiUsageCount += 1
-        await db.commit()
+        if not user.isPremium and user.aiUsageCount >= settings.FREE_AI_LIMIT:
+            raise HTTPException(status_code=403, detail="Aylık ücretsiz AI kullanım kotanız dolmuştur.")
+        return user
 
 
 guard_service = GuardService()
