@@ -2,15 +2,29 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useResume } from '@/context/ResumeContext';
+import NextImage from 'next/image';
+import { useResume, type ResumeData } from '@/context/ResumeContext';
 import { Download, Save, ArrowLeft, Sparkles, Loader2, Trash2, Check, CheckCircle2 } from 'lucide-react';
-import { pdf, Document, Page, Text, View, StyleSheet, Image, Link as PdfLink } from '@react-pdf/renderer';
+import { pdf, Document, Page, Text, View, StyleSheet, Image as PdfImage, Link as PdfLink } from '@react-pdf/renderer';
 import { EducationForm, ExperienceForm, ProjectsForm, CertificatesForm, LanguagesForm } from '@/components/ResumeForms';
 import { SkillsForm } from '@/components/SkillsForm';
 import { ResumePreviewHTML } from '@/components/ResumePreviewHTML';
 import { saveResume } from '@/app/editor/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { translateResumeUi } from '@/lib/resume-translations';
+
+function groupSkillsForPdf(skills: string[]) {
+    const groups = new Map<string, string[]>();
+    for (const entry of skills) {
+        const separator = entry.indexOf(': ');
+        const category = separator > 0 ? entry.slice(0, separator).trim() : '';
+        const skill = separator > 0 ? entry.slice(separator + 2).trim() : entry;
+        if (skill) {
+            groups.set(category, [...(groups.get(category) || []), skill]);
+        }
+    }
+    return [...groups.entries()];
+}
 
 // --- Form Components - Personal Info ---
 const TRANSLATIONS = {
@@ -37,7 +51,7 @@ const PersonalInfoForm = () => {
             <div className="mb-4 flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden shrink-0">
                     {resumeData.personalInfo.photo ? (
-                        <img src={resumeData.personalInfo.photo} alt="Profile" className="w-full h-full object-cover" />
+                        <NextImage src={resumeData.personalInfo.photo} alt="Profile photo" width={64} height={64} unoptimized className="w-full h-full object-cover" />
                     ) : (
                         <span className="text-gray-400 text-[10px] text-center px-1">{ui('Photo')}</span>
                     )}
@@ -196,7 +210,7 @@ function normalizeExternalUrl(value?: string) {
     }
 }
 
-const ResumePDF = ({ data }: { data: any }) => {
+const ResumePDF = ({ data }: { data: ResumeData }) => {
     const langCode = (data.meta?.language || 'en') as keyof typeof SECTION_TITLES;
     const titles = SECTION_TITLES[langCode] || SECTION_TITLES['en'];
 
@@ -205,7 +219,7 @@ const ResumePDF = ({ data }: { data: any }) => {
             <Page size="A4" style={styles.page}>
                 <View style={[styles.header, { flexDirection: 'row', alignItems: 'flex-start', gap: 16 }]}>
                     {data.personalInfo.photo && (
-                        <Image 
+                        <PdfImage
                             src={data.personalInfo.photo} 
                             style={{ width: 60, height: 60, borderRadius: 30, objectFit: 'cover', marginRight: 16 }} 
                         />
@@ -230,7 +244,7 @@ const ResumePDF = ({ data }: { data: any }) => {
                 {data.experience.length > 0 && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>{titles.experience}</Text>
-                        {data.experience.map((exp: any, i: number) => (
+                        {data.experience.map((exp, i) => (
                             <View key={i} style={styles.experienceBlock}>
                                 <View style={styles.row}>
                                     <View style={{ width: '75%' }}>
@@ -249,7 +263,7 @@ const ResumePDF = ({ data }: { data: any }) => {
                 {(data.projects || []).length > 0 && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>{titles.projects}</Text>
-                        {data.projects.map((proj: any, i: number) => (
+                        {data.projects.map((proj, i) => (
                             <View key={i} style={styles.experienceBlock}>
                                 <View style={styles.row}>
                                     <View style={{ width: '75%' }}>
@@ -265,7 +279,7 @@ const ResumePDF = ({ data }: { data: any }) => {
                 {data.education.length > 0 && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>{titles.education}</Text>
-                        {data.education.map((edu: any, i: number) => (
+                        {data.education.map((edu, i) => (
                             <View key={i} style={styles.experienceBlock}>
                                 <View style={styles.row}>
                                     <View style={{ width: '75%' }}>
@@ -285,8 +299,8 @@ const ResumePDF = ({ data }: { data: any }) => {
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>{titles.skills}</Text>
                         <View style={styles.skillsContainer}>
-                            {data.skills.map((skill: string, i: number) => (
-                                <Text key={i} style={styles.skillBadge}>{skill}</Text>
+                            {groupSkillsForPdf(data.skills).map(([category, skills]) => (
+                                <Text key={category || 'uncategorized'} style={styles.skillBadge}>{category ? `${category}: ` : ''}{skills.join(' • ')}</Text>
                             ))}
                         </View>
                     </View>
@@ -295,8 +309,8 @@ const ResumePDF = ({ data }: { data: any }) => {
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>{titles.languages}</Text>
                         <View style={styles.skillsContainer}>
-                            {(data.languages || []).map((lang: any, i: number) => (
-                                <Text key={i} style={styles.skillBadge}>{lang.language}: {translateResumeUi(lang.level, data.meta?.language)}</Text>
+                                {data.languages.map((lang, i) => (
+                                    <Text key={i} style={styles.skillBadge}>{lang.language}: {lang.level === 'Custom' ? lang.customLevel : translateResumeUi(lang.level, data.meta?.language)}</Text>
                             ))}
                         </View>
                     </View>
@@ -305,7 +319,7 @@ const ResumePDF = ({ data }: { data: any }) => {
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>{titles.certificates}</Text>
                         <View style={styles.skillsContainer}>
-                            {(data.certificates || []).map((cert: any, i: number) => (
+                            {data.certificates.map((cert, i) => (
                                 <View key={i} style={{ marginBottom: 5 }}>
                                     <Text style={styles.institution}>{cert.name}{cert.issuer ? ` (${cert.issuer})` : ''}{cert.date ? ` · ${cert.date}` : ''}</Text>
                                     {normalizeExternalUrl(cert.link) && (
@@ -323,22 +337,41 @@ const ResumePDF = ({ data }: { data: any }) => {
     );
 };
 
-const readChangedField = (resume: any, path: string): string => {
+const readChangedField = (resume: ResumeData, path: string): string => {
     const match = path.match(/^(\w+)(?:\[(\d+)\])?\.(\w+)$/);
     if (!match) return '';
     const [, section, index, field] = match;
-    const value = index === undefined ? resume?.[section]?.[field] : resume?.[section]?.[Number(index)]?.[field];
+    const sectionValue = (resume as unknown as Record<string, unknown>)[section];
+    const target = index === undefined
+        ? sectionValue
+        : Array.isArray(sectionValue) ? sectionValue[Number(index)] : undefined;
+    if (typeof target !== 'object' || target === null || Array.isArray(target)) return '';
+    const value = (target as Record<string, unknown>)[field];
     return Array.isArray(value) ? value.join(', ') : String(value ?? '');
 };
 
 type PendingTailorDraft = {
-    updated: any;
+    updated: ResumeData;
     changedFields: string[];
     tailoringNotes: string[];
     suggestedSkills: string[];
     jobDescription: string;
     iterationCount: number;
 };
+
+type TailorResponse = {
+    updatedContent?: ResumeData;
+    changedFields?: string[];
+    tailoringNotes?: string[];
+    suggestedSkills?: string[];
+    iterationCount?: number;
+    detail?: unknown;
+    error?: unknown;
+};
+
+function getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'An unexpected error occurred.';
+}
 
 export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: string }) => {
     const { resumeData, setResumeData } = useResume();
@@ -389,9 +422,10 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
                 })
             });
 
-            const data = await response.json();
+            const data = await response.json() as TailorResponse;
             if (!response.ok) {
-                throw new Error(data.detail || data.error || `API Error: ${response.status}`);
+                const detail = data.detail ?? data.error;
+                throw new Error(typeof detail === 'string' ? detail : `API Error: ${response.status}`);
             }
 
             const updated = data.updatedContent;
@@ -407,9 +441,9 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
             });
             setTailorFeedback("");
             if (!previousDraft) setIsJobModalOpen(false);
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error("Tailor Error:", e);
-            alert("Failed to tailor resume: " + e.message);
+            alert("Failed to tailor resume: " + getErrorMessage(e));
         } finally {
             setIsTailoring(false);
         }
@@ -422,12 +456,12 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
             ...prev,
             personalInfo: { ...prev.personalInfo, summary: updated.personalInfo?.summary ?? prev.personalInfo.summary },
             experience: prev.experience.map((exp, index) => {
-                const item = updated.experience?.find((candidate: any) => candidate.id && candidate.id === exp.id)
+                const item = updated.experience?.find(candidate => candidate.id === exp.id)
                     ?? updated.experience?.[index];
                 return item ? { ...exp, description: item.description ?? exp.description, highlights: item.highlights ?? exp.highlights } : exp;
             }),
             projects: prev.projects.map((project, index) => {
-                const item = updated.projects?.find((candidate: any) => candidate.id && candidate.id === project.id)
+                const item = updated.projects?.find(candidate => candidate.id === project.id)
                     ?? updated.projects?.[index];
                 return item ? { ...project, description: item.description ?? project.description } : project;
             }),
@@ -459,14 +493,15 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
             } else {
                 // Update success (already on the page)
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Save error:", error);
-            if (error.message.includes("Free limit")) {
+            const message = getErrorMessage(error);
+            if (message.includes("Free limit")) {
                 if (confirm("You've reached the free limit of 3 resumes. Upgrade to Pro to create more?")) {
                     router.push('/pricing');
                 }
             } else {
-                alert("Failed to save: " + error.message);
+                alert("Failed to save: " + message);
             }
         } finally {
             setIsSaving(false);

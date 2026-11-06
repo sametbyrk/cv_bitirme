@@ -1,22 +1,40 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
+
+const CONSENT_EVENT = 'cookie-consent-change';
+
+function subscribeToConsent(callback: () => void) {
+    window.addEventListener('storage', callback);
+    window.addEventListener(CONSENT_EVENT, callback);
+    return () => {
+        window.removeEventListener('storage', callback);
+        window.removeEventListener(CONSENT_EVENT, callback);
+    };
+}
+
+function getConsentSnapshot(): boolean {
+    return localStorage.getItem('cookie_consent') === 'true';
+}
+
+function getServerConsentSnapshot(): boolean | null {
+    // Keep the banner hidden until the browser has read localStorage. Returning
+    // false here flashes the banner for users who already accepted cookies.
+    return null;
+}
 
 export default function CookieBanner() {
-    // Only show if not accepted
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-        // Check local storage on mount
-        const consented = localStorage.getItem('cookie_consent');
-        if (consented !== 'true') {
-            setIsVisible(true);
-        }
-    }, []);
+    const consentSnapshot = useSyncExternalStore(
+        subscribeToConsent,
+        getConsentSnapshot,
+        getServerConsentSnapshot,
+    );
+    const [isDismissed, setIsDismissed] = useState(false);
+    const isVisible = consentSnapshot === false && !isDismissed;
 
     const handleAccept = () => {
         localStorage.setItem('cookie_consent', 'true');
-        setIsVisible(false);
+        window.dispatchEvent(new Event(CONSENT_EVENT));
     };
 
     if (!isVisible) return null;
@@ -33,7 +51,7 @@ export default function CookieBanner() {
                 </div>
                 <div className="flex gap-3">
                     <button
-                        onClick={() => setIsVisible(false)}
+                        onClick={() => setIsDismissed(true)}
                         className="px-4 py-2 text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition"
                     >
                         Decline

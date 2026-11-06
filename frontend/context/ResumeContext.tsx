@@ -48,6 +48,7 @@ export type ResumeData = {
         id: string;
         language: string;
         level: string;
+        customLevel?: string;
     }>;
     meta: {
         language: string;
@@ -106,7 +107,6 @@ export function ResumeProvider({ children, initialData, userId, resumeId, skipDr
         : (userId ? `cv_draft_user_${userId}` : 'cv_draft_guest');
     const [draftRestored, setDraftRestored] = useState(false);
     const hasLoadedFromStorage = useRef(false);
-    const hasShownNotification = useRef(false);
 
     // Initialize with defaults or server data
     const [resumeData, setResumeData] = useState<ResumeData>(() => {
@@ -134,6 +134,18 @@ export function ResumeProvider({ children, initialData, userId, resumeId, skipDr
             return;
         }
 
+        let restoreTimer: ReturnType<typeof setTimeout> | undefined;
+        let loadedTimer: ReturnType<typeof setTimeout> | undefined;
+        const queueDraftRestore = (draftData: ResumeData) => {
+            // localStorage is an external browser store. Apply its snapshot after this effect
+            // completes to avoid a synchronous cascading render, as React recommends:
+            // https://react.dev/learn/you-might-not-need-an-effect.
+            restoreTimer = setTimeout(() => {
+                setResumeData(draftData);
+                setDraftRestored(true);
+            }, 0);
+        };
+
         // For existing CVs, check for unsaved changes
         if (initialData) {
             try {
@@ -142,18 +154,20 @@ export function ResumeProvider({ children, initialData, userId, resumeId, skipDr
                     const parsed = JSON.parse(draft);
                     // Only restore if draft is newer (has more content)
                     if (parsed.personalInfo?.fullName || parsed.personalInfo?.summary) {
-                        setResumeData(ensureIds({
+                        queueDraftRestore(ensureIds({
                             ...defaultResumeData,
                             ...parsed,
                             personalInfo: { ...defaultResumeData.personalInfo, ...(parsed.personalInfo || {}) },
                             meta: { ...defaultResumeData.meta, ...(parsed.meta || {}) }
                         }));
-                        setDraftRestored(true);
                     }
                 }
-            } catch (e) { }
-            setTimeout(() => { hasLoadedFromStorage.current = true; }, 500);
-            return;
+            } catch { }
+            loadedTimer = setTimeout(() => { hasLoadedFromStorage.current = true; }, 500);
+            return () => {
+                if (restoreTimer) clearTimeout(restoreTimer);
+                if (loadedTimer) clearTimeout(loadedTimer);
+            };
         }
 
         // For new CVs, load from user-specific draft
@@ -168,18 +182,21 @@ export function ResumeProvider({ children, initialData, userId, resumeId, skipDr
                     (parsed.skills?.length > 0);
 
                 if (hasContent) {
-                    setResumeData(ensureIds({
+                    queueDraftRestore(ensureIds({
                         ...defaultResumeData,
                         ...parsed,
                         personalInfo: { ...defaultResumeData.personalInfo, ...(parsed.personalInfo || {}) },
                         meta: { ...defaultResumeData.meta, ...(parsed.meta || {}) }
                     }));
-                    setDraftRestored(true);
                 }
             }
-        } catch (e) { }
+        } catch { }
 
-        setTimeout(() => { hasLoadedFromStorage.current = true; }, 1000);
+        loadedTimer = setTimeout(() => { hasLoadedFromStorage.current = true; }, 1000);
+        return () => {
+            if (restoreTimer) clearTimeout(restoreTimer);
+            if (loadedTimer) clearTimeout(loadedTimer);
+        };
     }, [initialData, skipDraftRestore, draftKey]);
 
     // Auto-save to localStorage (works for both new and existing CVs)
@@ -196,7 +213,7 @@ export function ResumeProvider({ children, initialData, userId, resumeId, skipDr
         saveTimeoutRef.current = setTimeout(() => {
             try {
                 localStorage.setItem(draftKey, JSON.stringify(resumeData));
-            } catch (e) { }
+            } catch { }
         }, 2000);
 
         return () => {
@@ -227,7 +244,7 @@ export function ResumeProvider({ children, initialData, userId, resumeId, skipDr
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 5000);
         }
-    }, [draftRestored]);
+    }, [draftRestored, resumeData.meta?.language]);
 
     const updatePersonalInfo = (key: keyof ResumeData['personalInfo'], value: string) => {
         setResumeData((prev) => ({

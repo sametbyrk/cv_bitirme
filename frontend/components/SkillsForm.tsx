@@ -2,19 +2,20 @@
 
 import React, { useState } from 'react';
 import { useResume } from '@/context/ResumeContext';
-import { Plus, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { translateResumeUi } from '@/lib/resume-translations';
 
 export const SkillsForm = () => {
     const { resumeData, setResumeData } = useResume();
     const t = (text: string) => translateResumeUi(text, resumeData.meta?.language);
     const [skillInput, setSkillInput] = useState('');
+    const [category, setCategory] = useState('');
 
     const addSkill = () => {
         if (!skillInput.trim()) return;
         setResumeData((prev) => ({
             ...prev,
-            skills: [...prev.skills, skillInput.trim()],
+            skills: [...prev.skills, category.trim() ? `${category.trim()}: ${skillInput.trim()}` : skillInput.trim()],
         }));
         setSkillInput('');
     };
@@ -37,14 +38,23 @@ export const SkillsForm = () => {
         <div className="space-y-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-800">{t('Skills')}</h3>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
+                <input
+                    type="text"
+                    className="p-2 border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    aria-label={t('Optional category')}
+                    placeholder={t('Category (optional, e.g. Programming, Databases, Office)')}
+                />
+                <div className="flex gap-2">
                 <input
                     type="text"
                     className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white placeholder-gray-400"
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={t('Add a skill (e.g. JavaScript, React)')}
+                    placeholder={t('Add a skill (e.g. Python, Excel)')}
                 />
                 <button
                     onClick={addSkill}
@@ -52,6 +62,7 @@ export const SkillsForm = () => {
                 >
                     {t('Add')}
                 </button>
+                </div>
             </div>
 
             <div className="flex flex-wrap gap-2 pt-2">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useResume, ResumeData } from '@/context/ResumeContext';
 import { Plus, Trash2, Sparkles, Loader2, GripVertical, Check, X, ArrowRight, Zap } from 'lucide-react';
 import { Reorder, useDragControls, AnimatePresence, motion } from 'framer-motion';
@@ -954,12 +954,25 @@ const LanguageItem = ({
                     value={lang.level}
                     onChange={(e) => updateLanguage(lang.id, 'level', e.target.value)}
                 >
+                    <option value="A1">A1</option>
+                    <option value="A2">A2</option>
+                    <option value="B1">B1</option>
+                    <option value="B2">B2</option>
+                    <option value="C1">C1</option>
+                    <option value="C2">C2</option>
                     <option value="Native">{translateResumeUi('Native', language)}</option>
-                    <option value="Fluent">{translateResumeUi('Fluent', language)}</option>
-                    <option value="Advanced">{translateResumeUi('Advanced', language)} (C1)</option>
-                    <option value="Intermediate">{translateResumeUi('Intermediate', language)} (B2)</option>
-                    <option value="Beginner">{translateResumeUi('Beginner', language)} (A1/A2)</option>
+                    <option value="Custom">{translateResumeUi('Custom', language)}</option>
                 </select>
+                {lang.level === 'Custom' && (
+                    <input
+                        type="text"
+                        className="mt-2 w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white"
+                        value={lang.customLevel || ''}
+                        onChange={(e) => updateLanguage(lang.id, 'customLevel', e.target.value)}
+                        placeholder={translateResumeUi('Write your level', language)}
+                        aria-label={translateResumeUi('Custom proficiency level', language)}
+                    />
+                )}
             </div>
             <button
                 onClick={() => removeLanguage(lang.id)}
@@ -977,7 +990,7 @@ export const LanguagesForm = () => {
     const addLanguage = () => {
         setResumeData((prev) => ({
             ...prev,
-            languages: [...(prev.languages || []), { id: generateId(), language: '', level: 'Fluent' }]
+            languages: [...(prev.languages || []), { id: generateId(), language: '', level: 'B2' }]
         }));
     };
 

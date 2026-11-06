@@ -1,9 +1,23 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useResume } from '@/context/ResumeContext';
 import { Mail, Phone, Linkedin, MapPin, Github } from 'lucide-react';
 import { translateResumeUi } from '@/lib/resume-translations';
+
+function groupSkills(skills: string[]) {
+    const groups = new Map<string, string[]>();
+    for (const entry of skills) {
+        const separator = entry.indexOf(': ');
+        const category = separator > 0 ? entry.slice(0, separator).trim() : '';
+        const skill = separator > 0 ? entry.slice(separator + 2).trim() : entry;
+        if (!skill) continue;
+        const key = category;
+        groups.set(key, [...(groups.get(key) || []), skill]);
+    }
+    return [...groups.entries()];
+}
 
 const SECTION_TITLES = {
     en: { experience: 'Experience', education: 'Education', skills: 'Skills', languages: 'Languages', projects: 'Projects', certificates: 'Certificates', summary: 'Summary', contact: 'Contact', email: 'Email', phone: 'Phone', linkedin: 'LinkedIn', github: 'GitHub', location: 'Location', verifyCertificate: 'Verify certificate' },
@@ -42,7 +56,7 @@ export function ResumePreviewHTML() {
                     <div className="text-center">
                         {personalInfo.photo && (
                             <div className="w-24 h-32 bg-blue-500 rounded-xl mx-auto mb-4 flex items-center justify-center overflow-hidden border-2 border-white/10 shadow-lg">
-                                <img src={personalInfo.photo} alt="Profile" className="w-full h-full object-cover" />
+                                <Image src={personalInfo.photo} alt="Profile photo" width={96} height={128} unoptimized className="w-full h-full object-cover" />
                             </div>
                         )}
                         <h1 className="text-2xl font-bold uppercase tracking-wider mb-2 leading-tight">
@@ -91,7 +105,7 @@ export function ResumePreviewHTML() {
                                 {titles.education}
                             </h2>
                             <div className="space-y-4">
-                                {education.map((edu: any, i: number) => (
+                                {education.map((edu, i) => (
                                     <div key={i}>
                                         <h3 className="font-bold text-white">{edu.school}</h3>
                                         <p className="text-xs text-gray-400">{edu.degree}</p>
@@ -108,11 +122,12 @@ export function ResumePreviewHTML() {
                             <h2 className="text-sm font-bold uppercase tracking-widest text-blue-400 mb-4 border-b border-gray-700 pb-2">
                                 {titles.skills}
                             </h2>
-                            <div className="flex flex-wrap gap-2">
-                                {skills.map((skill: string, i: number) => (
-                                    <span key={i} className="bg-blue-600/20 text-blue-200 px-2 py-1 rounded text-xs">
-                                        {skill}
-                                    </span>
+                            <div className="space-y-2">
+                                {groupSkills(skills).map(([category, items]) => (
+                                    <div key={category || 'uncategorized'} className="text-xs text-blue-100">
+                                        {category && <strong className="text-blue-200">{category}: </strong>}
+                                        {items.join(' • ')}
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -128,7 +143,7 @@ export function ResumePreviewHTML() {
                                 {languages.map((lang, i) => (
                                     <div key={i} className="flex justify-between text-xs">
                                         <span className="text-white font-medium">{lang.language}</span>
-                                        <span className="text-gray-400">{translateResumeUi(lang.level, langCode)}</span>
+                                        <span className="text-gray-400">{lang.level === 'Custom' ? lang.customLevel : translateResumeUi(lang.level, langCode)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -142,7 +157,7 @@ export function ResumePreviewHTML() {
                                 {titles.certificates}
                             </h2>
                             <div className="space-y-3">
-                                {certificates.map((cert: any, i: number) => {
+                                {certificates.map((cert, i) => {
                                     const certificateUrl = normalizeExternalUrl(cert.link);
                                     return (
                                     <div key={i}>
@@ -185,7 +200,7 @@ export function ResumePreviewHTML() {
                                 {titles.experience}
                             </h2>
                             <div className="space-y-8 border-l-2 border-gray-200 pl-6 ml-2">
-                                {experience.map((exp: any, i: number) => (
+                                {experience.map((exp, i) => (
                                     <div key={i} className="relative">
                                         {/* Timeline Dot */}
                                         <div className="absolute -left-[31px] top-1 w-4 h-4 bg-slate-900 rounded-full border-4 border-white"></div>
@@ -215,7 +230,7 @@ export function ResumePreviewHTML() {
                                 {titles.projects}
                             </h2>
                             <div className="space-y-6">
-                                {projects.map((proj: any, i: number) => (
+                                {projects.map((proj, i) => (
                                     <div key={i}>
                                         <div className="flex justify-between items-baseline mb-1">
                                             <h3 className="text-lg font-bold text-gray-800">{proj.name}</h3>
@@ -246,7 +261,7 @@ export function ResumePreviewHTML() {
             <div className="border-b-2 border-gray-800 pb-4 mb-6 flex items-start gap-6">
                 {personalInfo.photo && (
                     <div className="w-24 h-32 shrink-0 overflow-hidden border-2 border-gray-200 rounded-lg shadow-sm">
-                        <img src={personalInfo.photo} alt="Profile" className="w-full h-full object-cover" />
+                        <Image src={personalInfo.photo} alt="Profile photo" width={96} height={128} unoptimized className="w-full h-full object-cover" />
                     </div>
                 )}
                 <div className="flex-1">
@@ -284,7 +299,7 @@ export function ResumePreviewHTML() {
                         {titles.experience}
                     </h2>
                     <div className="space-y-4">
-                        {experience.map((exp: any, i: number) => (
+                        {experience.map((exp, i) => (
                             <div key={i}>
                                 <div className="flex justify-between items-baseline mb-1">
                                     <div>
@@ -307,7 +322,7 @@ export function ResumePreviewHTML() {
                         {titles.projects}
                     </h2>
                     <div className="space-y-3">
-                        {projects.map((proj: any, i: number) => (
+                        {projects.map((proj, i) => (
                             <div key={i}>
                                 <div className="flex justify-between items-baseline">
                                     <span className="text-sm font-bold text-gray-900">{proj.name}</span>
@@ -327,7 +342,7 @@ export function ResumePreviewHTML() {
                         {titles.education}
                     </h2>
                     <div className="space-y-3">
-                        {education.map((edu: any, i: number) => (
+                        {education.map((edu, i) => (
                             <div key={i}>
                                 <div className="flex justify-between items-baseline">
                                     <div>
@@ -350,7 +365,11 @@ export function ResumePreviewHTML() {
                         {titles.skills}
                     </h2>
                     <p className="text-sm text-gray-700">
-                        {skills.join(' • ')}
+                        {groupSkills(skills).map(([category, items]) => (
+                            <span key={category} className="block">
+                                {category && <strong>{category}: </strong>}{items.join(' • ')}
+                            </span>
+                        ))}
                     </p>
                 </div>
             )}
@@ -362,7 +381,7 @@ export function ResumePreviewHTML() {
                         {titles.languages}
                     </h2>
                     <p className="text-sm text-gray-700">
-                        {languages.map((lang, i) => `${lang.language} (${translateResumeUi(lang.level, langCode)})`).join(' • ')}
+                        {languages.map((lang) => `${lang.language} (${lang.level === 'Custom' ? lang.customLevel || '' : translateResumeUi(lang.level, langCode)})`).join(' • ')}
                     </p>
                 </div>
             )}
@@ -374,7 +393,7 @@ export function ResumePreviewHTML() {
                         {titles.certificates}
                     </h2>
                     <div className="space-y-1">
-                        {certificates.map((cert: any, i: number) => {
+                        {certificates.map((cert, i) => {
                             const certificateUrl = normalizeExternalUrl(cert.link);
                             return (
                             <div key={i} className="text-sm">
