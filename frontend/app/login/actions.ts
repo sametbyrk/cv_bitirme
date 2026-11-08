@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { encrypt } from '@/lib/auth'
-import { checkRateLimit } from '@/lib/ratelimit'
+import { checkRateLimit, getAuthRateLimitKeys } from '@/lib/ratelimit'
 import bcrypt from 'bcryptjs'
 import { cookies, headers } from 'next/headers'
 
@@ -12,17 +12,17 @@ export async function signup(formData: FormData) {
     const password = formData.get('password') as string
     const name = formData.get('name') as string
 
-    // 1. Rate Limiting Check (Security - IP Based)
-    const headersList = await headers();
-    const ipIdentifier = headersList.get('x-forwarded-for') || 'unknown';
-    const limitStatus = await checkRateLimit(ipIdentifier);
-
-    if (!limitStatus.success) {
-        return redirect(`/login?error=Too many attempts. Try again in ${limitStatus.reset} minutes.`)
-    }
-
     if (!email || !password) {
         return redirect('/login?error=Email and password required')
+    }
+
+    const headersList = await headers();
+    const limitStatus = await checkRateLimit(getAuthRateLimitKeys('signup', email, headersList));
+    if (!limitStatus.success) {
+        const error = limitStatus.reason === 'unavailable'
+            ? 'Login service temporarily unavailable'
+            : `Too many attempts. Try again in ${limitStatus.reset ?? 1} minutes.`;
+        return redirect(`/login?error=${encodeURIComponent(error)}`);
     }
 
     try {
@@ -60,11 +60,11 @@ export async function signup(formData: FormData) {
             path: '/'
         })
 
-    } catch (error: any) {
-        if (error.message === 'NEXT_REDIRECT') {
+    } catch (error: unknown) {
+        if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
             throw error;
         }
-        console.error('Signup Error:', error.message) // Log only message
+        console.error('Signup Error:', error instanceof Error ? error.message : 'Unknown error') // Log only message
         return redirect(`/login?error=Signup failed`)
     }
 
@@ -75,13 +75,17 @@ export async function login(formData: FormData) {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
 
-    // 1. Rate Limiting Check (Security - IP Based)
-    const headersList = await headers();
-    const ipIdentifier = headersList.get('x-forwarded-for') || 'unknown';
-    const limitStatus = await checkRateLimit(ipIdentifier);
+    if (!email || !password) {
+        return redirect('/login?error=Email and password required');
+    }
 
+    const headersList = await headers();
+    const limitStatus = await checkRateLimit(getAuthRateLimitKeys('login', email, headersList));
     if (!limitStatus.success) {
-        return redirect(`/login?error=Too many attempts. Try again in ${limitStatus.reset} minutes.`)
+        const error = limitStatus.reason === 'unavailable'
+            ? 'Login service temporarily unavailable'
+            : `Too many attempts. Try again in ${limitStatus.reset ?? 1} minutes.`;
+        return redirect(`/login?error=${encodeURIComponent(error)}`);
     }
 
     try {
@@ -103,7 +107,7 @@ export async function login(formData: FormData) {
 
         // Create session
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000)
-        const userName = (user as any).name || ''
+        const userName = user.name || ''
         const session = await encrypt({ user: { id: user.id, email: user.email, name: userName, role: user.role } })
 
         const cookieStore = await cookies()
@@ -115,11 +119,11 @@ export async function login(formData: FormData) {
             path: '/'
         })
 
-    } catch (error: any) {
-        if (error.message === 'NEXT_REDIRECT') {
+    } catch (error: unknown) {
+        if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
             throw error;
         }
-        console.error('Login Error:', error.message) // Sanitize log
+        console.error('Login Error:', error instanceof Error ? error.message : 'Unknown error') // Sanitize log
         return redirect(`/login?error=Login failed`)
     }
 

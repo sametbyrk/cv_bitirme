@@ -9,7 +9,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     const session = await getSession();
 
     if (!session || !session.user) {
-        redirect("/login");
+        redirect("/admin/login");
     }
 
     // Defense in Depth: Doğrudan JWT yetkisine güvenmeyip DB üzerinden güncel rolü çekiyoruz.

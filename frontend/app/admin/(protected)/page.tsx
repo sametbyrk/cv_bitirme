@@ -5,10 +5,12 @@ import { redirect } from "next/navigation";
 import { Users, Crown, Sparkles } from "lucide-react";
 import { AdminChart } from "@/components/AdminChart";
 
+type DailyActivityRow = { date: Date; count: bigint | number };
+
 export default async function AdminPage() {
     // Defense in Depth: Layout zaten koruyor ancak doğrudan veriye erişimi de tekrar kontrol ediyoruz.
     const session = await getSession();
-    if (!session || !session.user) redirect("/login");
+    if (!session || !session.user) redirect("/admin/login");
 
     const role = await getCurrentUserRole(session.user.id);
 
@@ -32,7 +34,7 @@ export default async function AdminPage() {
 
     // --- Grafik Verisi (Son 7 Gün) ---
     // Performanslı olması için Prisma queryRaw ve DATE_TRUNC ile veritabanı seviyesinde grupluyoruz.
-    const usersByDay = await prisma.$queryRaw<any[]>`
+    const usersByDay = await prisma.$queryRaw<DailyActivityRow[]>`
       SELECT DATE_TRUNC('day', "createdAt") as date, COUNT(id) as count
       FROM "User"
       WHERE "createdAt" >= NOW() - INTERVAL '7 days'
@@ -40,7 +42,7 @@ export default async function AdminPage() {
       ORDER BY date ASC;
     `;
 
-    const resumesByDay = await prisma.$queryRaw<any[]>`
+    const resumesByDay = await prisma.$queryRaw<DailyActivityRow[]>`
       SELECT DATE_TRUNC('day', "createdAt") as date, COUNT(id) as count
       FROM "resume"
       WHERE "createdAt" >= NOW() - INTERVAL '7 days'

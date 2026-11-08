@@ -1,32 +1,29 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Search, LogOut, FileText } from 'lucide-react';
 import { ResumeCard } from '@/components/ResumeCard';
 // We need to import logout action, but it might need to be passed or imported if it's a server action
 import { logout } from '@/app/login/actions';
+import type { ResumeSummary, SessionUser } from '@/lib/app-types';
 
 interface DashboardClientProps {
-    resumes: any[];
-    user: any;
+    resumes: ResumeSummary[];
+    user: SessionUser;
     resumeLoadFailed?: boolean;
 }
 
 export default function DashboardClient({ resumes, user, resumeLoadFailed = false }: DashboardClientProps) {
     const [searchTerm, setSearchTerm] = useState('');
-    const [filteredResumes, setFilteredResumes] = useState(resumes);
-
-    useEffect(() => {
+    const filteredResumes = useMemo(() => {
         if (!searchTerm.trim()) {
-            setFilteredResumes(resumes);
-        } else {
-            const lowerTerm = searchTerm.toLowerCase();
-            const filtered = resumes.filter(resume =>
-                (resume.title || 'Untitled').toLowerCase().includes(lowerTerm)
-            );
-            setFilteredResumes(filtered);
+            return resumes;
         }
+        const lowerTerm = searchTerm.toLowerCase();
+        return resumes.filter(resume =>
+            (resume.title || 'Untitled').toLowerCase().includes(lowerTerm)
+        );
     }, [searchTerm, resumes]);
 
     return (
@@ -133,7 +130,7 @@ export default function DashboardClient({ resumes, user, resumeLoadFailed = fals
 
                     {filteredResumes.length === 0 && searchTerm && (
                         <div className="col-span-full text-center py-12 text-gray-500">
-                            No resumes found matching "{searchTerm}"
+                            No resumes found matching &quot;{searchTerm}&quot;
                         </div>
                     )}
 
