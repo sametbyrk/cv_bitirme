@@ -3,8 +3,9 @@
 import { getSession } from "@/lib/auth";
 import { api } from "@/lib/api-client";
 import { revalidatePath } from "next/cache";
+import type { ResumeData } from '@/context/ResumeContext';
 
-export async function saveResume(data: any, resumeId?: string) {
+export async function saveResume(data: ResumeData, resumeId?: string) {
     const session = await getSession();
     if (!session || !session.user) {
         throw new Error("Unauthorized");
@@ -14,7 +15,7 @@ export async function saveResume(data: any, resumeId?: string) {
 
     if (resumeId) {
         // UPDATE existing resume via FastAPI
-        await api.patch(`/resumes/${resumeId}`, {
+        await api.patch<unknown>(`/resumes/${resumeId}`, {
             title,
             content: data,
         });
@@ -23,13 +24,13 @@ export async function saveResume(data: any, resumeId?: string) {
         return { success: true };
     } else {
         // CREATE new resume via FastAPI (Kota denetimi ve KVKK temizliği FastAPI içinde)
-        const created = await api.post('/resumes/', {
+        const created = await api.post<{ id: string }>('/resumes/', {
             title,
             content: data,
         });
 
         revalidatePath('/dashboard');
-        return { success: true, newId: created.id };
+        return { success: true, newId: created?.id };
     }
 }
 

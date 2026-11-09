@@ -85,6 +85,7 @@ const PersonalInfoForm = () => {
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white placeholder-gray-400"
                         value={resumeData.personalInfo.fullName}
                         onChange={(e) => updatePersonalInfo('fullName', e.target.value)}
+                        maxLength={30}
                         placeholder={ui('e.g. John Doe')}
                     />
                 </div>
@@ -95,6 +96,7 @@ const PersonalInfoForm = () => {
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white placeholder-gray-400"
                         value={resumeData.personalInfo.email}
                         onChange={(e) => updatePersonalInfo('email', e.target.value)}
+                        maxLength={320}
                         placeholder={ui('e.g. john@example.com')}
                     />
                 </div>
@@ -105,6 +107,7 @@ const PersonalInfoForm = () => {
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white placeholder-gray-400"
                         value={resumeData.personalInfo.phone}
                         onChange={(e) => updatePersonalInfo('phone', e.target.value)}
+                        maxLength={50}
                         placeholder={ui('e.g. +1 234 567 890')}
                     />
                 </div>
@@ -115,6 +118,7 @@ const PersonalInfoForm = () => {
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white placeholder-gray-400"
                         value={resumeData.personalInfo.linkedin}
                         onChange={(e) => updatePersonalInfo('linkedin', e.target.value)}
+                        maxLength={500}
                         placeholder={ui('e.g. linkedin.com/in/johndoe')}
                     />
                 </div>
@@ -125,6 +129,7 @@ const PersonalInfoForm = () => {
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white placeholder-gray-400"
                         value={resumeData.personalInfo.github || ''}
                         onChange={(e) => updatePersonalInfo('github', e.target.value)}
+                        maxLength={500}
                         placeholder={ui('e.g. github.com/johndoe')}
                     />
                 </div>
@@ -135,6 +140,7 @@ const PersonalInfoForm = () => {
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white placeholder-gray-400"
                         value={resumeData.personalInfo.address || ''}
                         onChange={(e) => updatePersonalInfo('address', e.target.value)}
+                        maxLength={200}
                         placeholder={ui('e.g. Istanbul, Turkey')}
                     />
                 </div>
@@ -144,6 +150,7 @@ const PersonalInfoForm = () => {
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent h-24 text-black bg-white placeholder-gray-400"
                         value={resumeData.personalInfo.summary}
                         onChange={(e) => updatePersonalInfo('summary', e.target.value)}
+                        maxLength={600}
                         placeholder={ui('Briefly describe your professional background and key achievements...')}
                     />
                 </div>
@@ -464,7 +471,9 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
                                     placeholder={ui('Paste job description here...')}
                                     value={jobDescriptionInput}
                                     onChange={(e) => setJobDescriptionInput(e.target.value)}
+                                    maxLength={3000}
                                 />
+                                <p className="-mt-3 mb-3 text-right text-xs text-gray-500">{jobDescriptionInput.length}/3000</p>
                                 <div className="flex justify-end gap-3">
                                     <button
                                         onClick={() => {

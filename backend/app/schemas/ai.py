@@ -6,7 +6,12 @@ All models provide full camelCase aliases for seamless Next.js / TypeScript fron
 
 from enum import Enum
 from typing import Optional, List, Dict, Any, Literal
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
+from app.schemas.resume import MAX_RESUME_JSON_BYTES, validate_resume_json_size
+
+MAX_JOB_DESCRIPTION_CHARS = 3_000
+MAX_SINGLE_FIELD_TEXT_CHARS = 1_200
+SINGLE_FIELD_LIMITS = {"summary": 600, "experience": 1_200, "project": 800}
 
 
 # --- Akademik XAI çekirdeği ---
@@ -51,9 +56,23 @@ class HybridAtsScoreResponse(BaseModel):
 class SingleFieldOptimizeRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    text: str = Field(min_length=1, description="İyileştirilecek ham metin")
+    text: str = Field(min_length=1, max_length=MAX_SINGLE_FIELD_TEXT_CHARS, description="İyileştirilecek ham metin")
     type: Literal["summary", "experience", "project"]
     target_language: Optional[str] = Field(default="tr", alias="targetLanguage")
+
+    @model_validator(mode="after")
+    def enforce_field_limit(self):
+        limit = SINGLE_FIELD_LIMITS[self.type]
+        if len(self.text) > limit:
+            raise ValueError(f"{self.type} alanı en fazla {limit} karakter olabilir.")
+        return self
+
+    @field_validator("target_language")
+    @classmethod
+    def supported_language(cls, value):
+        if value is not None and value.lower() not in {"tr", "en", "de", "es", "fr"}:
+            raise ValueError("Desteklenmeyen hedef dil.")
+        return value
 
 
 class SingleFieldOptimizeResponse(BaseModel):
@@ -70,13 +89,18 @@ class OptimizeRequest(BaseModel):
 
     resume_id: Optional[str] = Field(default=None, alias="resumeId")
     resume_content: Optional[Dict[str, Any]] = Field(default=None, alias="resumeContent")  # kaydedilmemiş taslak desteği
-    job_description: str = Field(min_length=30, alias="jobDescription", description="Hedef iş ilanı metni")
+    job_description: str = Field(min_length=30, max_length=MAX_JOB_DESCRIPTION_CHARS, alias="jobDescription", description="Hedef iş ilanı metni")
     target_language: Optional[str] = Field(default="en", alias="targetLanguage")
     user_feedback: Optional[str] = Field(default=None, alias="userFeedback", min_length=1, max_length=4000)
     previous_tailored_content: Optional[Dict[str, Any]] = Field(
         default=None, alias="previousTailoredContent"
     )
     iteration_count: int = Field(default=0, alias="iterationCount", ge=0)
+
+    @field_validator("resume_content", "previous_tailored_content", mode="before")
+    @classmethod
+    def bound_resume_json(cls, value):
+        return validate_resume_json_size(value) if value is not None else value
 
     @model_validator(mode="after")
     def check_resume_source(self):
@@ -114,7 +138,7 @@ class JobMatchRequest(BaseModel):
 
     resume_id: Optional[str] = Field(default=None, alias="resumeId")
     resume_content: Optional[Dict[str, Any]] = Field(default=None, alias="currentResume")
-    job_description: str = Field(min_length=10, alias="jobDescription")
+    job_description: str = Field(min_length=10, max_length=MAX_JOB_DESCRIPTION_CHARS, alias="jobDescription")
     target_language: Optional[str] = Field(default="tr", alias="targetLanguage")
 
     @model_validator(mode="after")

@@ -121,7 +121,7 @@ const AiLimitModal = ({ onClose }: { onClose: () => void }) => (
                         <Zap size={22} className="text-white" />
                     </div>
                     <h2 className="text-lg font-bold text-gray-900 mb-2"><L text="AI Limit Reached" /></h2>
-                    <p className="text-sm text-gray-500 mb-6"><L text="You've used your 3 free AI optimizations. Upgrade to Pro for unlimited AI rewrites." /></p>
+                    <p className="text-sm text-gray-500 mb-6"><L text="You've used your 5 free AI optimizations. Upgrade to Pro for unlimited AI rewrites." /></p>
                     <div className="flex flex-col gap-2">
                         <a
                             href="/pricing"
@@ -180,6 +180,7 @@ const DateInput = ({
                 className={`w-full p-2 text-sm border rounded-md text-black bg-white placeholder-gray-400 ${showWarning ? 'border-orange-400' : 'border-gray-300'}`}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
+                maxLength={50}
                 placeholder={translateResumeUi(placeholder, resumeData.meta?.language)}
             />
             {showWarning && (
@@ -238,6 +239,7 @@ const EducationItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={edu.school}
                         onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
+                        maxLength={300}
                         placeholder={translateResumeUi('e.g. Harvard University', language)}
                     />
                 </div>
@@ -248,6 +250,7 @@ const EducationItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={edu.degree}
                         onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
+                        maxLength={200}
                         placeholder={translateResumeUi('e.g. Computer Science', language)}
                     />
                 </div>
@@ -382,6 +385,7 @@ const ExperienceItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={exp.company}
                         onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
+                        maxLength={200}
                         placeholder={translateResumeUi('e.g. Google', language)}
                     />
                 </div>
@@ -392,6 +396,7 @@ const ExperienceItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={exp.position}
                         onChange={(e) => updateExperience(exp.id, 'position', e.target.value)}
+                        maxLength={60}
                         placeholder={translateResumeUi('e.g. Software Engineer', language)}
                     />
                 </div>
@@ -431,6 +436,7 @@ const ExperienceItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md h-24 focus:ring-2 focus:ring-purple-500 transition-all font-mono text-black bg-white placeholder-gray-400"
                         value={exp.description}
                         onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
+                        maxLength={1200}
                         placeholder={translateResumeUi('Describe your responsibilities and achievements...', language)}
                     />
                     <p className="mt-1 text-[11px] text-gray-500">ℹ️ {translateResumeUi('Each successful AI generation uses 1 AI credit, even if you discard the suggestion.', language)}</p>
@@ -607,6 +613,7 @@ const ProjectItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={proj.name}
                         onChange={(e) => updateProject(proj.id, 'name', e.target.value)}
+                        maxLength={300}
                         placeholder={translateResumeUi('e.g. E-Commerce App', language)}
                     />
                 </div>
@@ -617,6 +624,7 @@ const ProjectItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={proj.link}
                         onChange={(e) => updateProject(proj.id, 'link', e.target.value)}
+                        maxLength={500}
                         placeholder={translateResumeUi('e.g. github.com/username/project', language)}
                     />
                 </div>
@@ -639,6 +647,7 @@ const ProjectItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md h-20 text-black bg-white placeholder-gray-400"
                         value={proj.description}
                         onChange={(e) => updateProject(proj.id, 'description', e.target.value)}
+                        maxLength={800}
                         placeholder={translateResumeUi('Briefly describe what you built...', language)}
                     />
                     <p className="mt-1 text-[11px] text-gray-500">ℹ️ {translateResumeUi('Each successful AI generation uses 1 AI credit, even if you discard the suggestion.', language)}</p>
@@ -811,6 +820,7 @@ const CertificateItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={cert.name}
                         onChange={(e) => updateCertificate(cert.id, 'name', e.target.value)}
+                        maxLength={300}
                         placeholder={translateResumeUi('e.g. AWS Solutions Architect', language)}
                     />
                 </div>
@@ -821,6 +831,7 @@ const CertificateItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={cert.issuer}
                         onChange={(e) => updateCertificate(cert.id, 'issuer', e.target.value)}
+                        maxLength={300}
                         placeholder={translateResumeUi('e.g. Amazon Web Services', language)}
                     />
                 </div>
@@ -839,6 +850,7 @@ const CertificateItem = ({
                         className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                         value={cert.link || ''}
                         onChange={(e) => updateCertificate(cert.id, 'link', e.target.value)}
+                        maxLength={500}
                         placeholder={translateResumeUi('https://credential.net/verify/...', language)}
                     />
                     <p className="mt-1 text-xs text-gray-500"><L text="Enter the certificate verification URL. It will appear as a clickable link in the preview and PDF." /></p>
@@ -944,6 +956,7 @@ const LanguageItem = ({
                     className="w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                     value={lang.language}
                     onChange={(e) => updateLanguage(lang.id, 'language', e.target.value)}
+                    maxLength={100}
                     placeholder={translateResumeUi('e.g. English, German', language)}
                 />
             </div>
@@ -969,6 +982,7 @@ const LanguageItem = ({
                         className="mt-2 w-full p-2 text-sm border border-gray-300 rounded-md text-black bg-white"
                         value={lang.customLevel || ''}
                         onChange={(e) => updateLanguage(lang.id, 'customLevel', e.target.value)}
+                        maxLength={100}
                         placeholder={translateResumeUi('Write your level', language)}
                         aria-label={translateResumeUi('Custom proficiency level', language)}
                     />

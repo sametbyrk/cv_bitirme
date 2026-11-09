@@ -21,7 +21,12 @@ function groupSkills(skills: string[]) {
 
 function hasExperienceContent(item: { company?: string; position?: string; startDate?: string; endDate?: string; description?: string; highlights?: string[] }) {
     return [item.company, item.position, item.startDate, item.endDate, item.description, ...(item.highlights || [])]
-        .some(value => typeof value === 'string' && value.trim().length > 0);
+        .some(value => typeof value === 'string' && value.trim().length > 0 && value.trim() !== '-');
+}
+
+function formatDateRange(start?: string, end?: string) {
+    const values = [start?.trim(), end?.trim()].filter((value): value is string => Boolean(value) && value !== '-');
+    return values.join(' - ');
 }
 
 const SECTION_TITLES = {
@@ -213,9 +218,7 @@ export function ResumePreviewHTML() {
 
                                         <div className="flex justify-between items-baseline mb-2">
                                             <h3 className="text-lg font-bold text-gray-800">{exp.position}</h3>
-                                            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                                                {exp.startDate} - {exp.endDate}
-                                            </span>
+                                            {formatDateRange(exp.startDate, exp.endDate) && <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">{formatDateRange(exp.startDate, exp.endDate)}</span>}
                                         </div>
                                         <div className="text-sm font-semibold text-blue-600 mb-2">
                                             {exp.company}
@@ -309,10 +312,11 @@ export function ResumePreviewHTML() {
                             <div key={i}>
                                 <div className="flex justify-between items-baseline mb-1">
                                     <div>
-                                        <span className="text-sm font-bold text-gray-900">{exp.position}</span>
-                                        <span className="text-sm text-gray-600"> at {exp.company}</span>
+                                        {exp.position?.trim() && <span className="text-sm font-bold text-gray-900">{exp.position}</span>}
+                                        {exp.position?.trim() && exp.company?.trim() && <span className="text-sm text-gray-600"> · </span>}
+                                        {exp.company?.trim() && <span className="text-sm text-gray-600">{exp.company}</span>}
                                     </div>
-                                    <span className="text-xs font-semibold text-gray-700">{exp.startDate} - {exp.endDate}</span>
+                                    {formatDateRange(exp.startDate, exp.endDate) && <span className="text-xs font-semibold text-gray-700">{formatDateRange(exp.startDate, exp.endDate)}</span>}
                                 </div>
                                 <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{exp.description}</p>
                             </div>

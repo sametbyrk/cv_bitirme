@@ -10,14 +10,23 @@ export const SkillsForm = () => {
     const t = (text: string) => translateResumeUi(text, resumeData.meta?.language);
     const [skillInput, setSkillInput] = useState('');
     const [category, setCategory] = useState('');
+    const [limitError, setLimitError] = useState(false);
 
     const addSkill = () => {
-        if (!skillInput.trim()) return;
+        const cleanSkill = skillInput.trim();
+        const cleanCategory = category.trim();
+        if (!cleanSkill) return;
+        const entry = cleanCategory ? `${cleanCategory}: ${cleanSkill}` : cleanSkill;
+        if (entry.length > 50) {
+            setLimitError(true);
+            return;
+        }
         setResumeData((prev) => ({
             ...prev,
-            skills: [...prev.skills, category.trim() ? `${category.trim()}: ${skillInput.trim()}` : skillInput.trim()],
+            skills: [...prev.skills, entry],
         }));
         setSkillInput('');
+        setLimitError(false);
     };
 
     const removeSkill = (index: number) => {
@@ -43,7 +52,8 @@ export const SkillsForm = () => {
                     type="text"
                     className="p-2 border border-gray-300 rounded-md text-black bg-white placeholder-gray-400"
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(e) => { setCategory(e.target.value); setLimitError(false); }}
+                    maxLength={50}
                     aria-label={t('Optional category')}
                     placeholder={t('Category (optional, e.g. Programming, Databases, Office)')}
                 />
@@ -52,7 +62,8 @@ export const SkillsForm = () => {
                     type="text"
                     className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white placeholder-gray-400"
                     value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
+                    onChange={(e) => { setSkillInput(e.target.value); setLimitError(false); }}
+                    maxLength={50}
                     onKeyDown={handleKeyDown}
                     placeholder={t('Add a skill (e.g. Python, Excel)')}
                 />
@@ -63,6 +74,7 @@ export const SkillsForm = () => {
                     {t('Add')}
                 </button>
                 </div>
+                {limitError && <p className="text-sm text-red-600">{t('Category and skill must be 50 characters or fewer.')}</p>}
             </div>
 
             <div className="flex flex-wrap gap-2 pt-2">

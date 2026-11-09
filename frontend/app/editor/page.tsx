@@ -6,6 +6,7 @@ import { ResumeEditor } from '@/components/ResumeEditor';
 import { getSession } from '@/lib/auth';
 import { api } from '@/lib/api-client';
 import { redirect } from 'next/navigation';
+import type { UserProfile } from '@/lib/app-types';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export default async function EditorPage() {
 
     let isPremium = false;
     try {
-        const userProfile = await api.get('/users/me');
+        const userProfile = await api.get<UserProfile>('/users/me');
         isPremium = userProfile?.isPremium || false;
     } catch {
         isPremium = false;

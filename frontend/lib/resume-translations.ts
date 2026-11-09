@@ -3,6 +3,7 @@ export type ResumeLanguage = 'en' | 'tr' | 'de' | 'es' | 'fr';
 const translations: Record<ResumeLanguage, Record<string, string>> = {
     en: {},
     tr: {
+        'Category and skill must be 50 characters or fewer.': 'Kategori ve yetenek birlikte en fazla 50 karakter olabilir.',
         'Personal Information': 'Kişisel Bilgiler', 'Photo': 'Fotoğraf', 'Profile Photo (Optional & Private)': 'Profil Fotoğrafı (İsteğe Bağlı ve Özel)',
         'Photo is saved to your browser only. It will not be stored in our database.': 'Fotoğraf yalnızca tarayıcınıza kaydedilir, veritabanımızda saklanmaz.',
         'e.g. John Doe': 'örn. Ayşe Yılmaz', 'e.g. john@example.com': 'örn. ayse@example.com', 'e.g. +1 234 567 890': 'örn. +90 555 123 45 67',
@@ -27,7 +28,7 @@ const translations: Record<ResumeLanguage, Record<string, string>> = {
         'Drag to Reorder': 'Sıralamak için sürükleyin', 'Delete': 'Sil', 'Format: 01/2022 or 2022': 'Biçim: 01/2022 veya 2022',
         'Format: 01/2022, 2022, or Present': 'Biçim: 01/2022, 2022 veya Devam Ediyor', 'AI Suggestion — Review Before Applying': 'Yapay Zekâ Önerisi — Uygulamadan Önce İnceleyin',
         'Before': 'Önce', 'Empty': 'Boş', 'AI Version': 'Yapay Zekâ Sürümü', 'Keep Original': 'Orijinali Koru', 'Apply AI Version': 'Yapay Zekâ Sürümünü Uygula',
-        'AI Limit Reached': 'Yapay Zekâ Kullanım Sınırına Ulaşıldı', "You've used your 3 free AI optimizations. Upgrade to Pro for unlimited AI rewrites.": '3 ücretsiz yapay zekâ kullanım hakkınızı doldurdunuz. Sınırsız kullanım için Pro’ya geçin.',
+        'AI Limit Reached': 'Yapay Zekâ Kullanım Sınırına Ulaşıldı', "You've used your 5 free AI optimizations. Upgrade to Pro for unlimited AI rewrites.": '5 ücretsiz yapay zekâ kullanım hakkınızı doldurdunuz. Sınırsız kullanım için Pro’ya geçin.',
         'View Pro Plans': 'Pro Planlarını Gör', 'Continue Editing': 'Düzenlemeye Devam Et', 'Please log in to use AI features.': 'Yapay zekâ özelliklerini kullanmak için giriş yapın.',
         'Network error. Please try again.': 'Bağlantı hatası. Lütfen tekrar deneyin.', 'Optional': 'İsteğe Bağlı', 'Private': 'Özel',
         'CV Editor': 'CV Düzenleyici', 'Saving...': 'Kaydediliyor...', 'Saved!': 'Kaydedildi!', 'Save': 'Kaydet', 'Settings': 'Ayarlar', 'Resume Language': 'CV Dili',
@@ -39,6 +40,7 @@ const translations: Record<ResumeLanguage, Record<string, string>> = {
         'Remove Photo': 'Fotoğrafı Kaldır', 'Add Education': 'Eğitim Ekle', 'Add Experience': 'Deneyim Ekle', 'Add Project': 'Proje Ekle', 'Add Certificate': 'Sertifika Ekle', 'Add Language': 'Dil Ekle',
     },
     de: {
+        'Category and skill must be 50 characters or fewer.': 'Kategorie und Fähigkeit dürfen zusammen höchstens 50 Zeichen umfassen.',
         'Personal Information': 'Persönliche Informationen', 'Photo': 'Foto', 'Profile Photo (Optional & Private)': 'Profilfoto (Optional und privat)',
         'Photo is saved to your browser only. It will not be stored in our database.': 'Das Foto wird nur in Ihrem Browser gespeichert und nicht in unserer Datenbank.',
         'Full Name': 'Vollständiger Name', 'Email': 'E-Mail', 'Phone': 'Telefon', 'LinkedIn URL (Optional)': 'LinkedIn-URL (Optional)', 'GitHub URL (Optional)': 'GitHub-URL (Optional)',
@@ -63,9 +65,10 @@ const translations: Record<ResumeLanguage, Record<string, string>> = {
         'Tailor my Resume': 'Lebenslauf anpassen', 'Tailor Resume to Job': 'Lebenslauf an die Stelle anpassen', 'Paste the job description or internship details here. We will optimize your CV to match their requirements in': 'Fügen Sie die Stellenbeschreibung oder Praktikumsdetails hier ein. Wir passen Ihren Lebenslauf an die Anforderungen in folgender Sprache an:', 'Cancel': 'Abbrechen', 'Analyzing...': 'Wird analysiert...', 'Analyze & Optimize': 'Analysieren und anpassen',
         'Each successful AI generation uses 1 AI credit, even if you discard the suggestion.': 'Jede erfolgreiche KI-Erstellung verbraucht 1 KI-Guthaben, auch wenn Sie den Vorschlag verwerfen.', 'Tell us what you want changed in this draft...': 'Beschreiben Sie, was an diesem Entwurf geändert werden soll...', 'Revise with feedback': 'Mit Feedback überarbeiten', 'Revising...': 'Wird überarbeitet...', 'Iteration': 'Überarbeitung',
         'Remove Photo': 'Foto entfernen', 'e.g. linkedin.com/in/johndoe': 'z. B. linkedin.com/in/maxmustermann', 'e.g. github.com/johndoe': 'z. B. github.com/maxmustermann', 'Add Education': 'Ausbildung hinzufügen', 'Add Experience': 'Berufserfahrung hinzufügen', 'Add Project': 'Projekt hinzufügen', 'Add Certificate': 'Zertifikat hinzufügen', 'Add Language': 'Sprache hinzufügen',
-        'AI Suggestion — Review Before Applying': 'KI-Vorschlag — vor dem Übernehmen prüfen', "You've used your 3 free AI optimizations. Upgrade to Pro for unlimited AI rewrites.": 'Sie haben Ihre 3 kostenlosen KI-Optimierungen verwendet. Wechseln Sie zu Pro für unbegrenzte Überarbeitungen.', 'View Pro Plans': 'Pro-Tarife ansehen', 'AI Limit Reached': 'KI-Limit erreicht',
+        'AI Suggestion — Review Before Applying': 'KI-Vorschlag — vor dem Übernehmen prüfen', "You've used your 5 free AI optimizations. Upgrade to Pro for unlimited AI rewrites.": 'Sie haben Ihre 5 kostenlosen KI-Optimierungen verwendet. Wechseln Sie zu Pro für unbegrenzte Überarbeitungen.', 'View Pro Plans': 'Pro-Tarife ansehen', 'AI Limit Reached': 'KI-Limit erreicht',
     },
     es: {
+        'Category and skill must be 50 characters or fewer.': 'La categoría y la habilidad pueden tener un máximo conjunto de 50 caracteres.',
         'Personal Information': 'Información personal', 'Photo': 'Foto', 'Profile Photo (Optional & Private)': 'Foto de perfil (opcional y privada)',
         'Photo is saved to your browser only. It will not be stored in our database.': 'La foto solo se guarda en tu navegador; no se almacena en nuestra base de datos.',
         'Full Name': 'Nombre completo', 'Email': 'Correo electrónico', 'Phone': 'Teléfono', 'LinkedIn URL (Optional)': 'URL de LinkedIn (opcional)', 'GitHub URL (Optional)': 'URL de GitHub (opcional)',
@@ -90,9 +93,10 @@ const translations: Record<ResumeLanguage, Record<string, string>> = {
         'Tailor my Resume': 'Adaptar mi CV', 'Tailor Resume to Job': 'Adaptar el CV al empleo', 'Paste the job description or internship details here. We will optimize your CV to match their requirements in': 'Pega aquí la descripción del empleo o las prácticas. Adaptaremos tu CV a los requisitos en el siguiente idioma:', 'Cancel': 'Cancelar', 'Analyzing...': 'Analizando...', 'Analyze & Optimize': 'Analizar y optimizar',
         'Each successful AI generation uses 1 AI credit, even if you discard the suggestion.': 'Cada generación exitosa de IA consume 1 crédito, aunque descartes la sugerencia.', 'Tell us what you want changed in this draft...': 'Dinos qué quieres cambiar en este borrador...', 'Revise with feedback': 'Revisar con comentarios', 'Revising...': 'Revisando...', 'Iteration': 'Revisión',
         'Remove Photo': 'Eliminar foto', 'e.g. linkedin.com/in/johndoe': 'p. ej., linkedin.com/in/anagarcia', 'e.g. github.com/johndoe': 'p. ej., github.com/anagarcia', 'Add Education': 'Añadir formación', 'Add Experience': 'Añadir experiencia', 'Add Project': 'Añadir proyecto', 'Add Certificate': 'Añadir certificado', 'Add Language': 'Añadir idioma',
-        'AI Suggestion — Review Before Applying': 'Sugerencia de IA — revisa antes de aplicar', "You've used your 3 free AI optimizations. Upgrade to Pro for unlimited AI rewrites.": 'Has usado tus 3 optimizaciones gratuitas. Pásate a Pro para obtener revisiones ilimitadas.', 'View Pro Plans': 'Ver planes Pro', 'AI Limit Reached': 'Límite de IA alcanzado',
+        'AI Suggestion — Review Before Applying': 'Sugerencia de IA — revisa antes de aplicar', "You've used your 5 free AI optimizations. Upgrade to Pro for unlimited AI rewrites.": 'Has usado tus 5 optimizaciones gratuitas. Pásate a Pro para obtener revisiones ilimitadas.', 'View Pro Plans': 'Ver planes Pro', 'AI Limit Reached': 'Límite de IA alcanzado',
     },
     fr: {
+        'Category and skill must be 50 characters or fewer.': 'La catégorie et la compétence peuvent contenir au maximum 50 caractères au total.',
         'Personal Information': 'Informations personnelles', 'Photo': 'Photo', 'Profile Photo (Optional & Private)': 'Photo de profil (facultative et privée)',
         'Photo is saved to your browser only. It will not be stored in our database.': 'La photo est enregistrée uniquement dans votre navigateur et ne sera pas stockée dans notre base de données.',
         'Full Name': 'Nom complet', 'Email': 'E-mail', 'Phone': 'Téléphone', 'LinkedIn URL (Optional)': 'URL LinkedIn (facultatif)', 'GitHub URL (Optional)': 'URL GitHub (facultatif)',
@@ -117,7 +121,7 @@ const translations: Record<ResumeLanguage, Record<string, string>> = {
         'Tailor my Resume': 'Adapter mon CV', 'Tailor Resume to Job': 'Adapter le CV à l’offre', 'Paste the job description or internship details here. We will optimize your CV to match their requirements in': 'Collez ici la description du poste ou du stage. Nous adapterons votre CV aux exigences dans la langue suivante :', 'Cancel': 'Annuler', 'Analyzing...': 'Analyse en cours...', 'Analyze & Optimize': 'Analyser et adapter',
         'Each successful AI generation uses 1 AI credit, even if you discard the suggestion.': 'Chaque génération IA réussie consomme 1 crédit, même si vous rejetez la suggestion.', 'Tell us what you want changed in this draft...': 'Indiquez les modifications souhaitées pour ce brouillon...', 'Revise with feedback': 'Réviser avec vos retours', 'Revising...': 'Révision en cours...', 'Iteration': 'Révision',
         'Remove Photo': 'Supprimer la photo', 'e.g. linkedin.com/in/johndoe': 'ex. linkedin.com/in/mariedupont', 'e.g. github.com/johndoe': 'ex. github.com/mariedupont', 'Add Education': 'Ajouter une formation', 'Add Experience': 'Ajouter une expérience', 'Add Project': 'Ajouter un projet', 'Add Certificate': 'Ajouter un certificat', 'Add Language': 'Ajouter une langue',
-        'AI Suggestion — Review Before Applying': 'Suggestion IA — vérifiez avant application', "You've used your 3 free AI optimizations. Upgrade to Pro for unlimited AI rewrites.": 'Vous avez utilisé vos 3 optimisations IA gratuites. Passez à Pro pour des réécritures illimitées.', 'View Pro Plans': 'Voir les offres Pro', 'AI Limit Reached': 'Limite IA atteinte',
+        'AI Suggestion — Review Before Applying': 'Suggestion IA — vérifiez avant application', "You've used your 5 free AI optimizations. Upgrade to Pro for unlimited AI rewrites.": 'Vous avez utilisé vos 5 optimisations IA gratuites. Passez à Pro pour des réécritures illimitées.', 'View Pro Plans': 'Voir les offres Pro', 'AI Limit Reached': 'Limite IA atteinte',
     },
 };
 

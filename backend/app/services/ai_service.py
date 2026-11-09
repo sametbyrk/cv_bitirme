@@ -1,6 +1,7 @@
 """Gemini-backed copy editing and truthful job-specific resume tailoring."""
 
 import json
+import logging
 import re
 from typing import Any, Dict, List, Tuple
 
@@ -11,12 +12,16 @@ from pydantic import ValidationError
 
 from app.core.config import settings
 from app.schemas.ai import (
+    SINGLE_FIELD_LIMITS,
     OptimizeRequest,
     OptimizeResponse,
     SingleFieldOptimizeRequest,
     SingleFieldOptimizeResponse,
 )
 from app.schemas.resume import ResumeContent
+
+
+logger = logging.getLogger(__name__)
 
 
 class AIService:
@@ -50,9 +55,32 @@ class AIService:
         except HTTPException:
             raise
         except Exception as exc:
+            provider_code = getattr(exc, "code", None) or getattr(exc, "status", None)
+            normalized_code = str(provider_code).upper()
+            logger.exception(
+                "Gemini request failed (model=%s, provider_code=%s)",
+                self.MODEL,
+                provider_code or "unknown",
+            )
+
+            if provider_code == 429 or "RESOURCE_EXHAUSTED" in normalized_code:
+                detail = "AI kullanım kotası dolmuş olabilir. Biraz sonra tekrar deneyin."
+                error_status = status.HTTP_503_SERVICE_UNAVAILABLE
+            elif provider_code in (401, 403) or any(
+                code in normalized_code for code in ("UNAUTHENTICATED", "PERMISSION_DENIED")
+            ):
+                detail = "AI sağlayıcı anahtarı geçersiz veya bu model için yetkisiz."
+                error_status = status.HTTP_502_BAD_GATEWAY
+            elif provider_code == 400 or "INVALID_ARGUMENT" in normalized_code:
+                detail = "İlan veya CV metni AI sağlayıcısı tarafından işlenemedi. Metinleri kısaltıp tekrar deneyin."
+                error_status = status.HTTP_502_BAD_GATEWAY
+            else:
+                detail = "AI sağlayıcısından yanıt alınamadı. Lütfen daha sonra tekrar deneyin."
+                error_status = status.HTTP_502_BAD_GATEWAY
+
             raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="AI sağlayıcısından yanıt alınamadı.",
+                status_code=error_status,
+                detail=detail,
             ) from exc
 
     async def optimize_single_field(
@@ -64,16 +92,24 @@ class AIService:
         }
         language_code = (request.target_language or "tr").lower()
         target_language = language_names.get(language_code, request.target_language or "Turkish")
+        output_limit = SINGLE_FIELD_LIMITS[request.type]
         prompt = f"""Sen profesyonel CV metin editörüsün. Yalnızca aşağıdaki kaynak metni yeniden ifade et.
 Kaynakta bulunmayan başarı, ölçüm, sorumluluk veya teknoloji ekleme. Gerçekleri değiştirme.
 Tür: {request.type}
 Hedef dil: {target_language}
+Çıktı en fazla {output_limit} karakter olmalı.
 Metin:
 <source>
 {request.text}
 </source>
 Yalnızca iyileştirilmiş metni döndür; açıklama veya başlık ekleme."""
-        return SingleFieldOptimizeResponse(optimizedText=await self._generate(prompt))
+        optimized_text = await self._generate(prompt)
+        if len(optimized_text) > output_limit:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="AI önerisi alanın karakter sınırını aşıyor. Tekrar deneyin.",
+            )
+        return SingleFieldOptimizeResponse(optimizedText=optimized_text)
 
     async def auto_tailor_resume(self, request: OptimizeRequest) -> OptimizeResponse:
         try:

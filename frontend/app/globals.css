@@ -25,6 +25,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Keep uninterrupted pasted strings inside the live A4 preview. */
+#resume-preview-print-area,
+#resume-preview-print-area * {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
 @page {
   size: A4;
   margin: 0;
@@ -46,14 +53,28 @@ body {
     visibility: hidden !important;
   }
 
+  /* Keep the resume in normal print flow so Chrome can paginate it. An
+     absolutely positioned preview is painted on the first sheet and can clip
+     sections that extend beyond the A4 page. */
+  body.printing-resume > *:has(#resume-preview-print-area) {
+    display: contents !important;
+  }
+
+  body.printing-resume > *:not(:has(#resume-preview-print-area)) {
+    display: none !important;
+  }
+
+  body.printing-resume > *:has(#resume-preview-print-area) > *:not(#resume-preview-print-area) {
+    display: none !important;
+  }
+
   body.printing-resume #resume-preview-print-area,
   body.printing-resume #resume-preview-print-area * {
     visibility: visible !important;
   }
 
   body.printing-resume #resume-preview-print-area {
-    position: absolute !important;
-    inset: 0 auto auto 0 !important;
+    position: static !important;
     display: block !important;
     width: 210mm !important;
     height: auto !important;
@@ -79,9 +100,12 @@ body {
   body.printing-resume #resume-preview-print-area > div > div {
     box-sizing: border-box !important;
     width: 210mm !important;
-    min-height: 0 !important;
+    min-height: 297mm !important;
     height: auto !important;
     flex: none !important;
+    overflow: visible !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
     transform: none !important;
     scale: 1 !important;
   }

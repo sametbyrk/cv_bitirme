@@ -14,7 +14,7 @@ export async function renameResume(resumeId: string, newTitle: string) {
         throw new Error("Title cannot be empty");
     }
 
-    await api.patch(`/resumes/${resumeId}`, {
+    await api.patch<unknown>(`/resumes/${resumeId}`, {
         title: newTitle.trim(),
     });
 
@@ -29,7 +29,7 @@ export async function duplicateResume(resumeId: string) {
     }
 
     // FastAPI duplicate endpoint'i kota denetimi ve kopyalamayı tek adımda yürütür
-    await api.post(`/resumes/${resumeId}/duplicate`);
+    await api.post<unknown>(`/resumes/${resumeId}/duplicate`);
 
     revalidatePath('/dashboard');
     return { success: true };

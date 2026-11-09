@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { FileText, MoreVertical, Trash2, Edit, Copy, Type } from 'lucide-react';
 import { deleteResume } from '@/app/editor/actions';
@@ -10,7 +10,7 @@ interface ResumeCardProps {
     resume: {
         id: string;
         title: string;
-        createdAt: Date | string;
+        createdAt?: Date | string | null;
     };
 }
 
@@ -26,20 +26,7 @@ function getInitialDate(createdAt: Date | string | undefined | null): string {
 
 export function ResumeCard({ resume }: ResumeCardProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [formattedDate, setFormattedDate] = useState<string>('');
-
-    useEffect(() => {
-        if (resume.createdAt) {
-            try {
-                const date = new Date(resume.createdAt);
-                if (!isNaN(date.getTime())) {
-                    setFormattedDate(date.toLocaleDateString());
-                }
-            } catch (e) {
-                console.error("Invalid date:", e);
-            }
-        }
-    }, [resume.createdAt]);
+    const formattedDate = getInitialDate(resume.createdAt);
 
     // Delete States
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -84,9 +71,9 @@ export function ResumeCard({ resume }: ResumeCardProps) {
         setIsDuplicating(true);
         try {
             await duplicateResume(resume.id);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Failed to duplicate", error);
-            alert(error.message || "Failed to duplicate resume");
+            alert(error instanceof Error ? error.message : "Failed to duplicate resume");
         } finally {
             setIsDuplicating(false);
             setIsMenuOpen(false);
@@ -227,7 +214,7 @@ export function ResumeCard({ resume }: ResumeCardProps) {
                         </div>
                         <h3 className="text-lg font-bold text-center text-gray-900 mb-2">Delete Resume?</h3>
                         <p className="text-gray-500 text-center text-sm mb-6">
-                            Are you sure you want to delete <span className="font-semibold text-gray-800">"{resume.title}"</span>? This action cannot be undone.
+                            Are you sure you want to delete <span className="font-semibold text-gray-800">&quot;{resume.title}&quot;</span>? This action cannot be undone.
                         </p>
                         <div className="flex gap-3">
                             <button

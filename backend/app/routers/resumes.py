@@ -57,14 +57,15 @@ def _parse_content(raw: Any) -> Dict[str, Any]:
 def _orm_to_response(resume: Resume) -> ResumeResponse:
     """
     SQLAlchemy ORM nesnesi → ResumeResponse Pydantic modeli.
-    content JSONB önce dict'e parse edilip ResumeContent'e validate edilir.
+    JSONB payload is returned as stored so legacy records that exceed today's
+    input limits can still be opened. Write request schemas enforce current limits.
     """
     content_dict = _parse_content(resume.content)
     return ResumeResponse(
         id=str(resume.id),
         userId=str(resume.userId),
         title=resume.title,
-        content=ResumeContent.model_validate(content_dict),
+        content=content_dict,
         createdAt=resume.createdAt,
         updatedAt=resume.updatedAt,
     )

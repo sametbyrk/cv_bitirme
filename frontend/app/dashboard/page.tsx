@@ -2,6 +2,7 @@ import { getSession } from '@/lib/auth';
 import { api } from '@/lib/api-client';
 import { redirect } from 'next/navigation';
 import DashboardClient from './DashboardClient';
+import type { ResumeSummary } from '@/lib/app-types';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,11 +18,10 @@ export default async function Dashboard() {
     const { user } = session;
 
     // 3. Fetch Resumes from FastAPI Backend
-    let resumes: any[] = [];
+    let resumes: ResumeSummary[] = [];
     let resumeLoadFailed = false;
     try {
-        const resumesData = await api.get('/resumes/');
-        resumes = Array.isArray(resumesData) ? resumesData : [];
+        resumes = (await api.get<ResumeSummary[]>('/resumes/')) ?? [];
     } catch (error) {
         console.error('Failed to fetch resumes from FastAPI:', error);
         resumeLoadFailed = true;
