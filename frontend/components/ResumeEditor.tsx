@@ -5,26 +5,12 @@ import Link from 'next/link';
 import NextImage from 'next/image';
 import { useResume, type ResumeData } from '@/context/ResumeContext';
 import { Download, Save, ArrowLeft, Sparkles, Loader2, Trash2, Check, CheckCircle2 } from 'lucide-react';
-import { pdf, Document, Page, Text, View, StyleSheet, Image as PdfImage, Link as PdfLink } from '@react-pdf/renderer';
 import { EducationForm, ExperienceForm, ProjectsForm, CertificatesForm, LanguagesForm } from '@/components/ResumeForms';
 import { SkillsForm } from '@/components/SkillsForm';
 import { ResumePreviewHTML } from '@/components/ResumePreviewHTML';
 import { saveResume } from '@/app/editor/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { translateResumeUi } from '@/lib/resume-translations';
-
-function groupSkillsForPdf(skills: string[]) {
-    const groups = new Map<string, string[]>();
-    for (const entry of skills) {
-        const separator = entry.indexOf(': ');
-        const category = separator > 0 ? entry.slice(0, separator).trim() : '';
-        const skill = separator > 0 ? entry.slice(separator + 2).trim() : entry;
-        if (skill) {
-            groups.set(category, [...(groups.get(category) || []), skill]);
-        }
-    }
-    return [...groups.entries()];
-}
 
 // --- Form Components - Personal Info ---
 const TRANSLATIONS = {
@@ -166,176 +152,7 @@ const PersonalInfoForm = () => {
     );
 };
 
-// --- PDF Generation Logic ---
-const styles = StyleSheet.create({
-    page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#333' },
-    header: { marginBottom: 20, borderBottom: '1px solid #ddd', paddingBottom: 16 },
-    name: { fontSize: 24, fontWeight: 'bold', marginBottom: 6, textTransform: 'uppercase', color: '#111' },
-    contactRow: { flexDirection: 'row', gap: 16, flexWrap: 'wrap', marginTop: 4 },
-    contactItem: { fontSize: 9, color: '#555' },
-    section: { marginBottom: 16 },
-    sectionTitle: { fontSize: 11, fontWeight: 'bold', marginBottom: 8, textTransform: 'uppercase', color: '#2563EB', borderBottom: '1px solid #eee', paddingBottom: 4, letterSpacing: 1 },
-    experienceBlock: { marginBottom: 10 },
-    row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 },
-    institution: { fontWeight: 'bold', fontSize: 10, color: '#000' },
-    date: { fontSize: 9, color: '#666' },
-    subtitle: { fontSize: 9, color: '#444', fontStyle: 'italic', marginBottom: 4 },
-    description: { fontSize: 9, color: '#333', lineHeight: 1.5 },
-    skillsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-    skillBadge: { fontSize: 9, color: '#333', backgroundColor: '#f3f4f6', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3 },
-});
-
-
-const SECTION_TITLES = {
-    en: { experience: 'Experience', education: 'Education', skills: 'Skills', languages: 'Languages', projects: 'Projects', certificates: 'Certificates', personalInfo: 'Personal Info', summary: 'Summary', email: 'Email', phone: 'Phone', linkedin: 'LinkedIn', github: 'GitHub', location: 'Location' },
-    tr: { experience: 'İş Deneyimi', education: 'Eğitim', skills: 'Yetenekler', languages: 'Diller', projects: 'Projeler', certificates: 'Sertifikalar', personalInfo: 'Kişisel Bilgiler', summary: 'Özet', email: 'E-posta', phone: 'Telefon', linkedin: 'LinkedIn', github: 'GitHub', location: 'Konum' },
-    de: { experience: 'Berufserfahrung', education: 'Ausbildung', skills: 'Fähigkeiten', languages: 'Sprachen', projects: 'Projekte', certificates: 'Zertifikate', personalInfo: 'Persönliche Infos', summary: 'Zusammenfassung', email: 'E-Mail', phone: 'Telefon', linkedin: 'LinkedIn', github: 'GitHub', location: 'Standort' },
-    es: { experience: 'Experiencia', education: 'Educación', skills: 'Habilidades', languages: 'Idiomas', projects: 'Proyectos', certificates: 'Certificados', personalInfo: 'Información personal', summary: 'Resumen profesional', email: 'Correo electrónico', phone: 'Teléfono', linkedin: 'LinkedIn', github: 'GitHub', location: 'Ubicación' },
-    fr: { experience: 'Expérience', education: 'Éducation', skills: 'Compétences', languages: 'Langues', projects: 'Projets', certificates: 'Certificats', personalInfo: 'Informations personnelles', summary: 'Résumé professionnel', email: 'E-mail', phone: 'Téléphone', linkedin: 'LinkedIn', github: 'GitHub', location: 'Localisation' },
-};
-
-const RESUME_LANGUAGE_NAMES: Record<string, string> = {
-    en: 'English', tr: 'Türkçe', de: 'Deutsch', es: 'Español', fr: 'Français',
-};
-
-function normalizeExternalUrl(value?: string) {
-    const input = value?.trim();
-    if (!input) return undefined;
-    const candidate = /^[a-z][a-z\d+.-]*:/i.test(input) ? input : `https://${input}`;
-    try {
-        const url = new URL(candidate);
-        return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : undefined;
-    } catch {
-        return undefined;
-    }
-}
-
-const ResumePDF = ({ data }: { data: ResumeData }) => {
-    const langCode = (data.meta?.language || 'en') as keyof typeof SECTION_TITLES;
-    const titles = SECTION_TITLES[langCode] || SECTION_TITLES['en'];
-
-    return (
-        <Document>
-            <Page size="A4" style={styles.page}>
-                <View style={[styles.header, { flexDirection: 'row', alignItems: 'flex-start', gap: 16 }]}>
-                    {data.personalInfo.photo && (
-                        <PdfImage
-                            src={data.personalInfo.photo} 
-                            style={{ width: 60, height: 60, borderRadius: 30, objectFit: 'cover', marginRight: 16 }} 
-                        />
-                    )}
-                    <View style={{ flex: 1 }}>
-                        <Text style={styles.name}>{data.personalInfo.fullName || 'YOUR NAME'}</Text>
-                        <View style={styles.contactRow}>
-                            {data.personalInfo.email && <Text style={styles.contactItem}>{titles.email}: {data.personalInfo.email}</Text>}
-                            {data.personalInfo.phone && <Text style={styles.contactItem}>{titles.phone}: {data.personalInfo.phone}</Text>}
-                            {data.personalInfo.linkedin && <Text style={styles.contactItem}>{titles.linkedin}: {data.personalInfo.linkedin}</Text>}
-                            {data.personalInfo.github && <Text style={styles.contactItem}>{titles.github}: {data.personalInfo.github}</Text>}
-                            {data.personalInfo.address && <Text style={styles.contactItem}>{titles.location}: {data.personalInfo.address}</Text>}
-                        </View>
-                    </View>
-                </View>
-                {data.personalInfo.summary && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>{titles.summary}</Text>
-                        <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{data.personalInfo.summary}</Text>
-                    </View>
-                )}
-                {data.experience.length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>{titles.experience}</Text>
-                        {data.experience.map((exp, i) => (
-                            <View key={i} style={styles.experienceBlock}>
-                                <View style={styles.row}>
-                                    <View style={{ width: '75%' }}>
-                                        <Text style={styles.institution}>{exp.position}</Text>
-                                        <Text style={styles.subtitle}>{exp.company}</Text>
-                                    </View>
-                                    <View style={{ width: '25%', alignItems: 'flex-end' }}>
-                                        <Text style={styles.date}>{exp.startDate} - {exp.endDate}</Text>
-                                    </View>
-                                </View>
-                                <Text style={styles.description}>{exp.description}</Text>
-                            </View>
-                        ))}
-                    </View>
-                )}
-                {(data.projects || []).length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>{titles.projects}</Text>
-                        {data.projects.map((proj, i) => (
-                            <View key={i} style={styles.experienceBlock}>
-                                <View style={styles.row}>
-                                    <View style={{ width: '75%' }}>
-                                        <Text style={styles.institution}>{proj.name}</Text>
-                                        {proj.link && <Text style={styles.subtitle}>{proj.link}</Text>}
-                                    </View>
-                                </View>
-                                {proj.description && <Text style={styles.description}>{proj.description}</Text>}
-                            </View>
-                        ))}
-                    </View>
-                )}
-                {data.education.length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>{titles.education}</Text>
-                        {data.education.map((edu, i) => (
-                            <View key={i} style={styles.experienceBlock}>
-                                <View style={styles.row}>
-                                    <View style={{ width: '75%' }}>
-                                        <Text style={styles.institution}>{edu.school}</Text>
-                                        <Text style={styles.subtitle}>{edu.degree}</Text>
-                                    </View>
-                                    <View style={{ width: '25%', alignItems: 'flex-end' }}>
-                                        <Text style={styles.date}>{edu.startDate} - {edu.endDate}</Text>
-                                    </View>
-                                </View>
-                                {edu.description && <Text style={styles.description}>{edu.description}</Text>}
-                            </View>
-                        ))}
-                    </View>
-                )}
-                {data.skills.length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>{titles.skills}</Text>
-                        <View style={styles.skillsContainer}>
-                            {groupSkillsForPdf(data.skills).map(([category, skills]) => (
-                                <Text key={category || 'uncategorized'} style={styles.skillBadge}>{category ? `${category}: ` : ''}{skills.join(' • ')}</Text>
-                            ))}
-                        </View>
-                    </View>
-                )}
-                {(data.languages || []).length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>{titles.languages}</Text>
-                        <View style={styles.skillsContainer}>
-                                {data.languages.map((lang, i) => (
-                                    <Text key={i} style={styles.skillBadge}>{lang.language}: {lang.level === 'Custom' ? lang.customLevel : translateResumeUi(lang.level, data.meta?.language)}</Text>
-                            ))}
-                        </View>
-                    </View>
-                )}
-                {(data.certificates || []).length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>{titles.certificates}</Text>
-                        <View style={styles.skillsContainer}>
-                            {data.certificates.map((cert, i) => (
-                                <View key={i} style={{ marginBottom: 5 }}>
-                                    <Text style={styles.institution}>{cert.name}{cert.issuer ? ` (${cert.issuer})` : ''}{cert.date ? ` · ${cert.date}` : ''}</Text>
-                                    {normalizeExternalUrl(cert.link) && (
-                                        <PdfLink src={normalizeExternalUrl(cert.link)!}>
-                                            <Text style={{ fontSize: 8, color: '#2563EB' }}>{normalizeExternalUrl(cert.link)}</Text>
-                                        </PdfLink>
-                                    )}
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-                )}
-            </Page>
-        </Document>
-    );
-};
+const RESUME_LANGUAGE_NAMES: Record<string, string> = { en: 'English', tr: 'Türkçe', de: 'Deutsch', es: 'Español', fr: 'Français' };
 
 const readChangedField = (resume: ResumeData, path: string): string => {
     const match = path.match(/^(\w+)(?:\[(\d+)\])?\.(\w+)$/);
@@ -508,22 +325,14 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
         }
     };
 
-    const handleDownloadPDF = async () => {
+    const handleDownloadPDF = () => {
         setIsDownloading(true);
-        try {
-            const blob = await pdf(<ResumePDF data={resumeData} />).toBlob();
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${resumeData.personalInfo.fullName || 'resume'}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } catch (error) {
-            console.error("Download failed", error);
-        } finally {
+        document.body.classList.add('printing-resume');
+        window.setTimeout(() => {
+            window.print();
+            document.body.classList.remove('printing-resume');
             setIsDownloading(false);
-        }
+        }, 150);
     };
 
     return (
@@ -760,7 +569,7 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
             </div>
 
             {/* Preview Section (Right) */}
-            <div className={`w-full md:w-1/2 bg-gray-600 p-4 md:p-8 flex justify-center overflow-y-auto scrollbar-hide h-full ${activeTab === 'editor' ? 'hidden md:flex' : 'flex'}`}>
+            <div id="resume-preview-print-area" className={`w-full md:w-1/2 bg-gray-600 p-4 md:p-8 flex justify-center overflow-y-auto scrollbar-hide h-full ${activeTab === 'editor' ? 'hidden md:flex' : 'flex'}`}>
                 <div className="origin-top transform scale-[0.45] sm:scale-[0.55] md:scale-[0.8] lg:scale-[0.9] xl:scale-100 transition-all duration-300 mt-4 md:mt-0">
                     <ResumePreviewHTML />
                 </div>

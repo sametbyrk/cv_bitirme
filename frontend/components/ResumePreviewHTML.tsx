@@ -19,6 +19,11 @@ function groupSkills(skills: string[]) {
     return [...groups.entries()];
 }
 
+function hasExperienceContent(item: { company?: string; position?: string; startDate?: string; endDate?: string; description?: string; highlights?: string[] }) {
+    return [item.company, item.position, item.startDate, item.endDate, item.description, ...(item.highlights || [])]
+        .some(value => typeof value === 'string' && value.trim().length > 0);
+}
+
 const SECTION_TITLES = {
     en: { experience: 'Experience', education: 'Education', skills: 'Skills', languages: 'Languages', projects: 'Projects', certificates: 'Certificates', summary: 'Summary', contact: 'Contact', email: 'Email', phone: 'Phone', linkedin: 'LinkedIn', github: 'GitHub', location: 'Location', verifyCertificate: 'Verify certificate' },
     tr: { experience: 'İş Deneyimi', education: 'Eğitim', skills: 'Yetenekler', languages: 'Diller', projects: 'Projeler', certificates: 'Sertifikalar', summary: 'Özet', contact: 'İletişim', email: 'E-posta', phone: 'Telefon', linkedin: 'LinkedIn', github: 'GitHub', location: 'Konum', verifyCertificate: 'Sertifikayı doğrula' },
@@ -44,6 +49,7 @@ export function ResumePreviewHTML() {
     const { templateId, projects = [], certificates = [], languages = [], education = [], experience = [], skills = [], personalInfo } = resumeData;
     const langCode = (resumeData.meta?.language || 'en') as keyof typeof SECTION_TITLES;
     const titles = SECTION_TITLES[langCode] || SECTION_TITLES['en'];
+    const visibleExperience = experience.filter(hasExperienceContent);
 
     // --- Modern/Premium Template (Two-Column with Sidebar) ---
     if (templateId === 'modern') {
@@ -194,13 +200,13 @@ export function ResumePreviewHTML() {
                     )}
 
                     {/* Experience */}
-                    {experience.length > 0 && (
+                    {visibleExperience.length > 0 && (
                         <div>
                             <h2 className="text-xl font-bold text-gray-900 border-b-2 border-slate-900 pb-2 mb-6 uppercase">
                                 {titles.experience}
                             </h2>
                             <div className="space-y-8 border-l-2 border-gray-200 pl-6 ml-2">
-                                {experience.map((exp, i) => (
+                                {visibleExperience.map((exp, i) => (
                                     <div key={i} className="relative">
                                         {/* Timeline Dot */}
                                         <div className="absolute -left-[31px] top-1 w-4 h-4 bg-slate-900 rounded-full border-4 border-white"></div>
@@ -293,13 +299,13 @@ export function ResumePreviewHTML() {
             )}
 
             {/* Experience */}
-            {experience.length > 0 && (
+                    {visibleExperience.length > 0 && (
                 <div className="mb-6">
                     <h2 className="text-sm font-bold text-gray-800 uppercase tracking-widest border-b-2 border-gray-600 pb-1 mb-3">
                         {titles.experience}
                     </h2>
                     <div className="space-y-4">
-                        {experience.map((exp, i) => (
+                        {visibleExperience.map((exp, i) => (
                             <div key={i}>
                                 <div className="flex justify-between items-baseline mb-1">
                                     <div>
