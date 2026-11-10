@@ -318,6 +318,18 @@ Compose ayarları iki servisi geliştirme modunda başlatır.
 | Sırada | Kural tabanlı ve anlamsal hibrit ATS skorlama |
 | Sonrasında | Etiketli CV/iş ilanı veri setiyle değerlendirme ve kalibrasyon |
 
+### 📄 Lisans / License
+
+Kod; kişisel, eğitim ve akademik amaçlarla incelenebilir, indirilebilir,
+yerelde çalıştırılabilir ve değiştirilebilir. Ticari kullanımın yanı sıra
+yazılı izin olmadan dağıtılması, yayımlanması veya herkese açık/üretim ortamında
+barındırılması yasaktır. Ayrıntılar için [LICENSE](LICENSE) dosyasına bakın.
+
+The code may be viewed, downloaded, run locally, and modified for personal,
+educational, and academic purposes. Commercial use, distribution, publication,
+or public/production hosting requires prior written permission. See the
+[LICENSE](LICENSE) for details.
+
 ---
 
 <div align="center">
