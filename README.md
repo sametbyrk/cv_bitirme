@@ -183,7 +183,7 @@ The repository includes a GitHub Actions workflow for the static tour in `docs/`
 
 | Phase | Focus | Status |
 |---|---|---|
-| Now | Resume editor, PDF export, and reviewable Auto-Tailor suggestions |
+| Now | Resume editor, PDF export, and reviewable Auto-Tailor suggestions | ✅ Complete |
 | Next | Hybrid ATS scoring with rule-based and semantic matching |
 | Later | Evaluation and calibration with a labeled resume/job dataset |
 
@@ -314,7 +314,7 @@ Compose ayarları iki servisi geliştirme modunda başlatır.
 
 | Aşama | Kapsam | Durum |
 |---|---|---|
-| Şimdi | CV editörü, PDF çıktısı ve incelenebilir Auto-Tailor önerileri |
+| Şimdi | CV editörü, PDF çıktısı ve incelenebilir Auto-Tailor önerileri | ✅ Tamamlandı |
 | Sırada | Kural tabanlı ve anlamsal hibrit ATS skorlama |
 | Sonrasında | Etiketli CV/iş ilanı veri setiyle değerlendirme ve kalibrasyon |
 
