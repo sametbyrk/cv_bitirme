@@ -12,9 +12,15 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
+        const currentResume = body.currentResume && typeof body.currentResume === 'object'
+            ? { ...body.currentResume }
+            : body.currentResume;
+        if (currentResume?.personalInfo && typeof currentResume.personalInfo === 'object') {
+            currentResume.personalInfo = { ...currentResume.personalInfo, photo: null };
+        }
         const result = await api.post('/ai/tailor', {
             jobDescription: body.jobDescription,
-            resumeContent: body.currentResume,
+            resumeContent: currentResume,
             targetLanguage: body.targetLanguage,
             userFeedback: body.userFeedback,
             previousTailoredContent: body.previousTailoredContent,

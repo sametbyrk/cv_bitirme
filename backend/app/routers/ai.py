@@ -56,6 +56,18 @@ def _parse_content(raw: Any) -> Dict[str, Any]:
     return raw if isinstance(raw, dict) else {}
 
 
+def _check_resume_text_inputs(value: Any) -> None:
+    """Run the prompt-injection heuristic on every free-text CV value."""
+    if isinstance(value, str):
+        guard_service.check_prompt_injection(value)
+    elif isinstance(value, dict):
+        for nested in value.values():
+            _check_resume_text_inputs(nested)
+    elif isinstance(value, list):
+        for nested in value:
+            _check_resume_text_inputs(nested)
+
+
 @router.post(
     "/optimize-field",
     response_model=SingleFieldOptimizeResponse,
@@ -110,6 +122,8 @@ async def tailor_resume(
         content = _parse_content(resume.content)
     else:
         content = body.resume_content or {}
+
+    _check_resume_text_inputs(content)
 
     try:
         normalized = ResumeContent.model_validate(content).model_dump(

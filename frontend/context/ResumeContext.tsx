@@ -239,7 +239,7 @@ export function ResumeProvider({ children, initialData, userId, resumeId, skipDr
             const message = messages[lang as keyof typeof messages] || messages.en;
 
             const notification = document.createElement('div');
-            notification.innerHTML = message;
+            notification.textContent = message;
             notification.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#F59E0B;color:white;padding:12px 24px;border-radius:8px;z-index:9999;font-size:14px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.15);animation:fadeIn 0.3s ease;';
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 5000);

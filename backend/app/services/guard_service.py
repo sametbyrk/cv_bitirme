@@ -18,6 +18,12 @@ class GuardService:
         r"system\s+prompt",
         r"\b(jailbreak|bypass)\b",
         r"<\s*script\b",
+        r"(?:önceki|önceki tüm|önceki bütün|önceki talimatları)\s+(?:talimatları?\s+)?(?:yok say|unut|görmezden gel)",
+        r"(?:sistem|gizli)\s+(?:istemini|talimatları|prompt(?:unu)?)\s+(?:göster|açıkla|yazdır|ifşa et)",
+        r"(?:kuralları|güvenlik kurallarını)\s+(?:yok say|atlat|devre dışı bırak)",
+        r"ignore\s+(?:all\s+)?(?:previous|prior|above)\s+(?:rules|instructions)",
+        r"(?:act|pretend)\s+as\s+(?:a|an)\s+system",
+        r"<\s*/?\s*(?:system|assistant|developer|instruction)\b",
     )
 
     @classmethod

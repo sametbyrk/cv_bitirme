@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.routers import ai, resumes, users
+from app.middleware.ai_request_size import AIRequestBodyLimitMiddleware
 
 # FastAPI Uygulaması Başlatma
 app = FastAPI(
@@ -15,6 +16,13 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json"
+)
+
+# Bound AI request bodies before FastAPI parses JSON to limit memory and provider cost.
+app.add_middleware(
+    AIRequestBodyLimitMiddleware,
+    max_body_bytes=256 * 1024,
+    path_prefix=f"{settings.API_V1_STR}/ai/",
 )
 
 # CORS (Cross-Origin Resource Sharing) Yapılandırması
