@@ -103,8 +103,8 @@ export async function GET(request: Request) {
 
         return NextResponse.redirect(new URL('/dashboard', request.url));
 
-    } catch (err: any) {
-        console.error('Google Callback Error:', err);
-        return NextResponse.redirect(new URL(`/login?error=Login_Error: ${err.message}`, request.url));
+    } catch (err: unknown) {
+        console.error('Google Callback Error:', err instanceof Error ? err.message : 'Unknown error');
+        return NextResponse.redirect(new URL('/login?error=Login_Error', request.url));
     }
 }

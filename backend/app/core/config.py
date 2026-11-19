@@ -34,14 +34,15 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = "https://placeholder-project.supabase.co"
     SUPABASE_KEY: Optional[str] = None
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
-    SUPABASE_JWT_SECRET: str = Field(
-        default="",
-        description="Supabase JWT Gizli Anahtarı (.env dosyasından okunur)"
+    APP_AUTH_JWT_SECRET: str = Field(
+        min_length=32,
+        description="Frontend ve backend uygulama oturum JWT'leri için ortak gizli anahtar"
     )
 
     # Google Gemini API
     GEMINI_API_KEY: Optional[str] = None
     GEMINI_MODEL: str = "gemini-3.5-flash-lite"
+    GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
 
     # Upstash Redis (Dağıtık Rate Limiting için)
     UPSTASH_REDIS_REST_URL: Optional[str] = None

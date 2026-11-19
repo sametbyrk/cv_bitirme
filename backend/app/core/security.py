@@ -27,7 +27,7 @@ async def get_current_user(
     """
     FastAPI Dependency:
     İstek başlığındaki 'Authorization: Bearer <token>' değerini okur.
-    Supabase JWT Secret ile imza doğrulaması yapar ve doğrulanmış kullanıcıyı döner.
+    Uygulamanın ortak APP_AUTH_JWT_SECRET anahtarıyla imza doğrulaması yapar.
     """
     if not credentials or not credentials.credentials:
         raise HTTPException(
@@ -39,11 +39,10 @@ async def get_current_user(
     token = credentials.credentials
 
     try:
-        # Supabase JWT doğrulaması (HS256 algoritması)
-        # options={"verify_aud": False} ile audience uyuşmazlığı esnetilir
+        # Frontend jose ve backend PyJWT aynı uygulama secret'ını kullanır.
         payload: Dict[str, Any] = jwt.decode(
             token,
-            settings.SUPABASE_JWT_SECRET,
+            settings.APP_AUTH_JWT_SECRET,
             algorithms=["HS256"],
             options={"verify_aud": False}
         )
