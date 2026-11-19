@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+import asyncio
 from typing import Any, Dict, List, Tuple
 
 from fastapi import HTTPException, status
@@ -58,7 +59,7 @@ class AIService:
         self, prompt: str, *, system_instruction: str, json_mode: bool = False
     ) -> str:
         try:
-            response = await self._get_client().aio.models.generate_content(
+            response = await asyncio.wait_for(self._get_client().aio.models.generate_content(
                 model=self.MODEL,
                 contents=prompt,
                 config=types.GenerateContentConfig(
@@ -66,11 +67,16 @@ class AIService:
                     system_instruction=system_instruction,
                     response_mime_type="application/json" if json_mode else "text/plain",
                 ),
-            )
+            ), timeout=settings.AI_GENERATION_TIMEOUT_SECONDS)
             text = response.text
             if not text:
                 raise ValueError("Gemini boş yanıt döndürdü.")
             return text.strip()
+        except asyncio.TimeoutError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"code": "AI_GENERATION_TIMEOUT", "message": "AI üretimi zaman sınırını aştı."},
+            ) from exc
         except HTTPException:
             raise
         except Exception as exc:

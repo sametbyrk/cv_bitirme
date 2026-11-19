@@ -66,7 +66,7 @@ class AIRequestBodyLimitMiddleware:
 
     async def _send_too_large(self, send: ASGISend) -> None:
         body = json.dumps(
-            {"detail": f"AI request body must not exceed {self.max_body_bytes} bytes."}
+            {"detail": {"code": "REQUEST_BODY_TOO_LARGE", "message": f"AI request body must not exceed {self.max_body_bytes} bytes."}}
         ).encode("utf-8")
         await send(
             {
