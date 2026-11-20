@@ -1,0 +1,115 @@
+[
+  {
+    "job_id": "sentetik-backend-python",
+    "job_description": "Sentetik örnek ilan. Backend geliştirme ekibimize katılacak yazılım mühendisi arıyoruz. Python ve FastAPI ile REST API geliştirme, PostgreSQL veri tabanı tasarımı ve SQL sorguları konusunda deneyim beklenmektedir. Docker kullanımı tercih sebebidir.",
+    "expected": [
+      "Python",
+      "FastAPI",
+      "PostgreSQL",
+      "SQL",
+      "Docker"
+    ]
+  },
+  {
+    "job_id": "sentetik-frontend-react",
+    "job_description": "Sentetik örnek ilan. Web arayüzleri geliştiren frontend mühendisi arıyoruz. React, TypeScript, HTML ve CSS ile erişilebilir ve duyarlı arayüzler oluşturma deneyimi gereklidir. Next.js bilgisi artı değer sayılır.",
+    "expected": [
+      "React",
+      "TypeScript",
+      "HTML",
+      "CSS",
+      "Next.js"
+    ]
+  },
+  {
+    "job_id": "sentetik-java-spring",
+    "job_description": "Sentetik örnek ilan. Kurumsal uygulamalar geliştirecek Java mühendisi aranıyor. Java ve Spring Boot ile backend servisleri geliştirme, REST API tasarımı ve PostgreSQL kullanımı beklenmektedir. Kubernetes bilgisi tercih sebebidir.",
+    "expected": [
+      "Java",
+      "Spring Boot",
+      "REST API",
+      "PostgreSQL",
+      "Kubernetes"
+    ]
+  },
+  {
+    "job_id": "sentetik-data-engineer",
+    "job_description": "Sentetik örnek ilan. Veri mühendisliği rolü için Python, Apache Spark ve SQL deneyimi arıyoruz. Büyük veri işleme hatları kurma, veri modelleme ve Apache Airflow ile iş akışı yönetimi gereklidir. AWS bilgisi avantaj sağlar.",
+    "expected": [
+      "Python",
+      "Apache Spark",
+      "SQL",
+      "Apache Airflow",
+      "AWS"
+    ]
+  },
+  {
+    "job_id": "sentetik-mobile-android",
+    "job_description": "Sentetik örnek ilan. Android uygulama geliştiricisi arıyoruz. Kotlin, Android SDK ve REST API entegrasyonu konularında deneyim gereklidir. Git ile ekip çalışması ve otomatik test yazımı beklenmektedir. Firebase bilgisi tercih sebebidir.",
+    "expected": [
+      "Kotlin",
+      "Android SDK",
+      "REST API",
+      "Git",
+      "Firebase"
+    ]
+  },
+  {
+    "job_id": "sentetik-cloud-devops",
+    "job_description": "Sentetik örnek ilan. DevOps mühendisi olarak CI/CD süreçleri kurmanız beklenmektedir. Linux, Docker, Kubernetes ve Terraform konusunda uygulama deneyimi gereklidir. AWS veya Azure bulut servislerinden en az biriyle çalışma deneyimi tercih edilir.",
+    "expected": [
+      "CI/CD",
+      "Linux",
+      "Docker",
+      "Kubernetes",
+      "Terraform",
+      "AWS",
+      "Azure"
+    ]
+  },
+  {
+    "job_id": "sentetik-security-engineer",
+    "job_description": "Sentetik örnek ilan. Uygulama güvenliği ekibinde görev alacak mühendis arıyoruz. OWASP Top 10, güvenli kod incelemesi, Python ve Burp Suite deneyimi gereklidir. Tehdit modelleme ve güvenlik testleri yürütme becerisi beklenmektedir.",
+    "expected": [
+      "OWASP Top 10",
+      "Python",
+      "Burp Suite",
+      "Threat Modeling",
+      "Security Testing"
+    ]
+  },
+  {
+    "job_id": "sentetik-qa-automation",
+    "job_description": "Sentetik örnek ilan. QA otomasyon mühendisi arıyoruz. Playwright veya Selenium ile web test otomasyonu, TypeScript ya da Python ile test geliştirme ve Git kullanımı gereklidir. API testleri ve CI pipeline deneyimi avantajdır.",
+    "expected": [
+      "Playwright",
+      "Selenium",
+      "TypeScript",
+      "Python",
+      "Git",
+      "API Testing"
+    ]
+  },
+  {
+    "job_id": "sentetik-ml-engineer",
+    "job_description": "Sentetik örnek ilan. Makine öğrenmesi mühendisi rolü için Python, PyTorch ve scikit-learn deneyimi arıyoruz. Model eğitimi, değerlendirme metrikleri ve veri hazırlama konularında yetkinlik beklenmektedir. Hugging Face ekosistemi bilgisi tercih sebebidir.",
+    "expected": [
+      "Python",
+      "PyTorch",
+      "scikit-learn",
+      "Model Training",
+      "Hugging Face"
+    ]
+  },
+  {
+    "job_id": "sentetik-database-admin",
+    "job_description": "Sentetik örnek ilan. PostgreSQL veri tabanı yöneticisi arıyoruz. PostgreSQL yönetimi, SQL performans optimizasyonu, yedekleme ve geri yükleme süreçleri ile Linux sistemlerinde çalışma deneyimi gereklidir. Redis bilgisi tercih sebebidir.",
+    "expected": [
+      "PostgreSQL",
+      "SQL",
+      "Backup and Recovery",
+      "Linux",
+      "Redis"
+    ]
+  }
+]
