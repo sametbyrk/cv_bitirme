@@ -60,22 +60,35 @@ class Settings(BaseSettings):
         description="Ücretsiz kullanıcıların oluşturabileceği maksimum CV sayısı."
     )
     FREE_AI_LIMIT: int = Field(
-        default=3,
+        default=5,
         description="Ücretsiz kullanıcıların aylık kullanabileceği AI isteği sayısı."
     )
-
-    # Tez Kalibrasyon Parametreleri (Ampirik değerlendirme için dinamik ayarlar)
-    SIMILARITY_THRESHOLD: float = Field(
-        default=0.80,
-        description="τ (Tau) Anlamsal benzerlik eşiği. text-embedding-004 + Cosine Similarity için."
+    PREMIUM_AI_DAILY_LIMIT: int = Field(
+        default=50,
+        gt=0,
+        description="Premium kullanıcıların kayan 24 saat içinde kullanabileceği AI isteği sayısı."
     )
+    AI_GENERATION_TIMEOUT_SECONDS: int = Field(default=20, gt=0, le=120)
+
+    # Initial hybrid-ATS parameters; calibrate them with the labeled evaluation set.
     REQUIRED_SKILL_WEIGHT: float = Field(
         default=1.0,
+        gt=0,
         description="Zorunlu yetkinlik katsayısı"
     )
     PREFERRED_SKILL_WEIGHT: float = Field(
         default=0.5,
+        gt=0,
         description="Tercih edilen yetkinlik katsayısı"
+    )
+    ATS_TAU_LOW: float = Field(default=0.55, ge=0.0, le=1.0)
+    ATS_TAU_HIGH: float = Field(default=0.80, ge=0.0, le=1.0)
+    ATS_BETA: float = Field(default=0.6, ge=0.0, le=1.0)
+    TRUSTED_PROXY_HOPS: int = Field(
+        default=0,
+        ge=0,
+        le=10,
+        description="Güvenilir ters proxy sayısı; yalnızca proxy X-Forwarded-For zincirini doğru kuruyorsa ayarlayın.",
     )
 
     @property

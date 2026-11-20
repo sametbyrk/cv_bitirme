@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from app.schemas.ai import (
     MAX_JOB_DESCRIPTION_CHARS,
+    MAX_TAILOR_JOB_DESCRIPTION_CHARS,
     MAX_RESUME_JSON_BYTES,
     JobMatchRequest,
     OptimizeRequest,
@@ -35,7 +36,7 @@ class AIInputLimitTests(unittest.TestCase):
                     SingleFieldOptimizeRequest(text=at_limit + "x", type=field_type)
 
     def test_job_description_limit_accepts_boundary_and_rejects_one_over(self):
-        at_limit = "x" * MAX_JOB_DESCRIPTION_CHARS
+        at_limit = "x" * MAX_TAILOR_JOB_DESCRIPTION_CHARS
         valid_args = {
             "jobDescription": at_limit,
             "resumeContent": {"personalInfo": {"summary": "Candidate"}},
@@ -43,13 +44,17 @@ class AIInputLimitTests(unittest.TestCase):
         self.assertEqual(OptimizeRequest(**valid_args).job_description, at_limit)
         with self.assertRaises(ValidationError):
             OptimizeRequest(**{**valid_args, "jobDescription": at_limit + "x"})
+        ats_at_limit = "x" * MAX_JOB_DESCRIPTION_CHARS
         match_args = {
-            "jobDescription": at_limit,
+            "jobDescription": ats_at_limit,
             "currentResume": {"personalInfo": {"summary": "Candidate"}},
         }
-        self.assertEqual(JobMatchRequest(**match_args).job_description, at_limit)
-        with self.assertRaises(ValidationError):
-            JobMatchRequest(**{**match_args, "jobDescription": at_limit + "x"})
+        self.assertEqual(JobMatchRequest(**match_args).job_description, ats_at_limit)
+        # ATS field length is enforced by the service as HTTP 413, not by Pydantic 422.
+        self.assertEqual(
+            JobMatchRequest(**{**match_args, "jobDescription": ats_at_limit + "x"}).job_description,
+            ats_at_limit + "x",
+        )
 
     def test_resume_content_json_byte_limit_accepts_boundary_and_rejects_one_over(self):
         at_limit = _resume_json_at_size(MAX_RESUME_JSON_BYTES)

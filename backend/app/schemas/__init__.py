@@ -18,7 +18,10 @@ from .resume import (
 from .user import UserProfile, UserUsageStatus
 from .ai import (
     SkillPriority,
+    SkillCategory,
     MatchType,
+    JobSkill,
+    JobSkillExtraction,
     KeywordMatchDetail,
     HybridAtsScoreResponse,
     SingleFieldOptimizeRequest,
@@ -48,7 +51,10 @@ __all__ = [
     "UserProfile",
     "UserUsageStatus",
     "SkillPriority",
+    "SkillCategory",
     "MatchType",
+    "JobSkill",
+    "JobSkillExtraction",
     "KeywordMatchDetail",
     "HybridAtsScoreResponse",
     "SingleFieldOptimizeRequest",

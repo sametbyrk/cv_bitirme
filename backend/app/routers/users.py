@@ -4,7 +4,8 @@ Kullanıcı profili ve AI kota bilgilerini dönen endpoint'ler.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from datetime import datetime, timezone
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -78,14 +79,32 @@ async def get_usage_status(
     """
     Kullanıcının AI kullanım sayısı ve kalan kredi bilgisini döner.
     Ücretsiz kullanıcılar için limit settings.FREE_AI_LIMIT üzerinden hesaplanır.
-    Premium kullanıcılar için limit sınırsızdır (remaining_credits=None).
+    Free and premium accounts have separate rolling product quotas.
     """
     user = await _get_or_create_user(db, current_user)
 
-    # Premium kullanıcı için kalan kredi sınırsız
+    reset_at = user.aiUsageResetDate
+    if reset_at is not None and reset_at.tzinfo is None:
+        reset_at = reset_at.replace(tzinfo=timezone.utc)
+    if (reset_at is not None and reset_at <= datetime.now(timezone.utc)) or (reset_at is None and user.aiUsageCount):
+        user.aiUsageCount = 0
+        user.aiUsageResetDate = None
+        await db.commit()
+        await db.refresh(user)
+
+    pending = (await db.execute(text(
+        "SELECT count(*) FROM public.ai_usage_reservation WHERE user_id=:uid AND status='reserved' AND expires_at > NOW()"
+    ), {"uid": user.id})).scalar_one()
     remaining = None
-    if not user.isPremium:
-        remaining = max(0, settings.FREE_AI_LIMIT - user.aiUsageCount)
+    if user.isPremium:
+        used = (await db.execute(text("""
+            SELECT count(*) FROM public.ai_usage_reservation
+            WHERE user_id=:uid AND status='consumed'
+              AND completed_at > NOW() - INTERVAL '24 hours'
+        """), {"uid": user.id})).scalar_one()
+        remaining = max(0, settings.PREMIUM_AI_DAILY_LIMIT - used - pending)
+    else:
+        remaining = max(0, settings.FREE_AI_LIMIT - user.aiUsageCount - pending)
 
     return UserUsageStatus(
         userId=str(user.id),
