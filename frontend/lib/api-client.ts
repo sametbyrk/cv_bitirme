@@ -5,12 +5,14 @@ const API_BASE_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_
 export class ApiError extends Error {
     public status: number;
     public data: unknown;
+    public retryAfter: string | null;
 
-    constructor(message: string, status: number, data?: unknown) {
+    constructor(message: string, status: number, data?: unknown, retryAfter: string | null = null) {
         super(message);
         this.name = 'ApiError';
         this.status = status;
         this.data = data;
+        this.retryAfter = retryAfter;
     }
 }
 
@@ -56,7 +58,7 @@ async function fetchWithAuth<T = unknown>(endpoint: string, options: RequestInit
             // response body JSON değilse
         }
 
-        throw new ApiError(errorMessage, response.status, errorData);
+        throw new ApiError(errorMessage, response.status, errorData, response.headers.get('Retry-After'));
     }
 
     if (response.status === 204) {

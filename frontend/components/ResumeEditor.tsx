@@ -193,6 +193,45 @@ type TailorResponse = {
     error?: unknown;
 };
 
+type AtsKeywordMatch = {
+    keyword: string;
+    category: string;
+    importance: 'required' | 'preferred';
+    matchType: 'exact' | 'semantic' | 'missing';
+      similarity?: number | null;
+      credit?: number | null;
+      status?: 'supporting' | null;
+    matchedWith?: string | null;
+    relatedSkills?: string[];
+    evidence?: string | null;
+    evidenceSection?: string | null;
+};
+
+type AtsMatchResult = {
+    atsScore: {
+        score: number;
+        ruleCoverage: number;
+        hybridCoverage: number;
+        matched: AtsKeywordMatch[];
+        semantic: AtsKeywordMatch[];
+        missing: AtsKeywordMatch[];
+        confidence: 'low' | 'medium';
+        algorithmVersion: string;
+        params: Record<string, number>;
+        explanation: string;
+    };
+    extractedSkills: Array<{ name: string; importance: 'required' | 'preferred'; category: string; evidence: string }>;
+    excludedSkillCount: number;
+};
+
+type AtsHistoryRecord = {
+    id: string;
+    resumeId: string | null;
+    jobDescription: string;
+    result: AtsMatchResult;
+    createdAt: string;
+};
+
 function getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : 'An unexpected error occurred.';
 }
@@ -213,6 +252,47 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
     const [tailorFeedback, setTailorFeedback] = useState("");
     const [isTailoring, setIsTailoring] = useState(false);
     const [pendingTailor, setPendingTailor] = useState<PendingTailorDraft | null>(null);
+    const [isMatching, setIsMatching] = useState(false);
+    const [atsResult, setAtsResult] = useState<AtsMatchResult | null>(null);
+    const [atsError, setAtsError] = useState<string | null>(null);
+    const [showAtsLimitModal, setShowAtsLimitModal] = useState(false);
+    const [atsQuotaResetAt, setAtsQuotaResetAt] = useState<string | null>(null);
+    const [atsQuotaKind, setAtsQuotaKind] = useState<'free' | 'premium'>('free');
+    const [atsHistory, setAtsHistory] = useState<AtsHistoryRecord[]>([]);
+    const [showAtsHistory, setShowAtsHistory] = useState(false);
+    const [isLoadingAtsHistory, setIsLoadingAtsHistory] = useState(false);
+    const [atsHistoryError, setAtsHistoryError] = useState<string | null>(null);
+
+    const loadAtsHistory = async () => {
+        setIsLoadingAtsHistory(true);
+        setAtsHistoryError(null);
+        try {
+            const response = await fetch('/api/ai/match', { method: 'GET', cache: 'no-store' });
+            const data = await response.json() as AtsHistoryRecord[] | { error?: string };
+            if (!response.ok || !Array.isArray(data)) {
+                throw new Error(typeof data === 'object' && data && 'error' in data ? data.error || ui('Could not load saved ATS analyses.') : ui('Could not load saved ATS analyses.'));
+            }
+            setAtsHistory(data);
+        } catch (error) {
+            setAtsHistoryError(getErrorMessage(error));
+        } finally {
+            setIsLoadingAtsHistory(false);
+        }
+    };
+
+    const deleteAtsHistoryItem = async (id: string) => {
+        try {
+            const response = await fetch('/api/ai/match', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id }),
+            });
+            if (!response.ok) throw new Error(ui('Could not delete saved ATS analysis.'));
+            setAtsHistory((items) => items.filter((item) => item.id !== id));
+        } catch (error) {
+            setAtsHistoryError(getErrorMessage(error));
+        }
+    };
 
     // Read URL params for template selection
     const searchParams = useSearchParams();
@@ -270,6 +350,69 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
             alert("Failed to tailor resume: " + getErrorMessage(e));
         } finally {
             setIsTailoring(false);
+        }
+    };
+
+    const handleJobMatch = async () => {
+        if (jobDescriptionInput.trim().length < 30) return;
+        setIsMatching(true);
+        setAtsResult(null);
+        setAtsError(null);
+        try {
+            const response = await fetch('/api/ai/match', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jobDescription: jobDescriptionInput,
+                    ...(resumeId ? { resumeId } : { currentResume: resumeData }),
+                    targetLanguage: resumeData.meta?.language || 'en',
+                }),
+            });
+            const data = await response.json() as AtsMatchResult & { detail?: unknown; error?: unknown };
+            if (!response.ok) {
+                if (response.status === 401) throw new Error(ui('Please log in to use AI features.'));
+                if (response.status === 404) throw new Error(ui('The saved resume was not found or you do not have access.'));
+                const detail = data.detail ?? data.error;
+                const payload = detail && typeof detail === 'object' ? detail as { code?: string; message?: string; resetAt?: string | null } : null;
+                const code = payload?.code ?? '';
+                if (code === 'AI_QUOTA_EXCEEDED' || code === 'PREMIUM_AI_QUOTA_EXCEEDED') {
+                    setAtsQuotaResetAt(payload?.resetAt ?? null);
+                    setAtsQuotaKind(code === 'PREMIUM_AI_QUOTA_EXCEEDED' ? 'premium' : 'free');
+                    setShowAtsLimitModal(true);
+                    return;
+                }
+                const messages: Record<string, string> = {
+                    NO_JOB_SKILLS: 'No verifiable skills could be extracted from the job description; no score was produced.',
+                    NO_REQUIRED_SKILLS: 'No required skills could be verified in the job description; no score was produced.',
+                    REQUIRED_UNVERIFIED: 'Required skills could not be verified in the job description.',
+                    JOB_EMPTY: 'Enter a job description.', JOB_TOO_SHORT: 'The job description is too short.',
+                    JOB_TOO_LONG: 'The job description exceeds 20,000 characters.', CV_TOO_LARGE: 'The resume is too large to analyze.',
+                    RATE_LIMITED: 'Too many requests.',
+                    RATE_LIMIT_UNAVAILABLE: 'Request limiting is temporarily unavailable.', AI_QUOTA_EXCEEDED: 'Your AI allowance has been reached.',
+                    ATS_EXTRACTION_TIMEOUT: 'Job requirements could not be extracted in time.', ATS_EMBEDDING_TIMEOUT: 'Semantic matching timed out.',
+                    ATS_TOTAL_TIMEOUT: 'ATS matching exceeded its time limit.', CV_NO_TEXT: 'The resume has no text that can be compared.',
+                    ATS_PROVIDER_UNAVAILABLE: 'The AI matching service is temporarily unavailable.',
+                    ATS_CONFIG_INVALID: 'ATS scoring parameters are invalid. Please contact support.',
+                    REQUEST_BODY_TOO_LARGE: 'The request body exceeds the 256 KiB limit.',
+                    QUOTA_UNAVAILABLE: 'AI quota could not be checked right now.',
+                    QUOTA_FINALIZATION_FAILED: 'AI usage could not be finalized. Please retry later.',
+                    PREMIUM_AI_QUOTA_EXCEEDED: 'You have reached the Pro AI limit of 50 uses in 24 hours. Try again after the limit resets.',
+                    USER_NOT_FOUND: 'Your user account could not be found.',
+                    INVALID_REQUEST: 'The match request is incomplete or invalid.',
+                };
+                const retryAfter = response.headers.get('Retry-After');
+                const rateLimitSuffix = code === 'RATE_LIMITED' && retryAfter
+                    ? ` ${ui('Retry after')} ${retryAfter} ${ui('seconds.')}`
+                    : '';
+                throw new Error(`${ui(messages[code] || payload?.message || (typeof detail === 'string' ? detail : `API Error: ${response.status}`))}${rateLimitSuffix}`);
+            }
+            setAtsResult(data);
+            if (showAtsHistory) void loadAtsHistory();
+        } catch (error) {
+            console.error('ATS match error:', error);
+            setAtsError(getErrorMessage(error));
+        } finally {
+            setIsMatching(false);
         }
     };
 
@@ -447,20 +590,32 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
                             {ui('Paste Job Description to optimize. Language:')} <span className="font-bold">{selectedLanguageName}</span>
                         </p>
                         <p className="text-xs text-indigo-100 mb-3">ℹ️ {ui('Each successful AI generation uses 1 AI credit, even if you discard the suggestion.')}</p>
-                        <button
-                            onClick={() => setIsJobModalOpen(true)}
-                            className="w-full bg-white text-indigo-600 font-bold py-2 rounded shadow hover:bg-indigo-50 transition text-sm"
-                        >
-                            {ui('Tailor my Resume')}
-                        </button>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <button
+                                onClick={() => setIsJobModalOpen(true)}
+                                className="w-full bg-white text-indigo-600 font-bold py-2 rounded shadow hover:bg-indigo-50 transition text-sm"
+                            >
+                                {ui('Tailor my Resume')}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setIsJobModalOpen(true);
+                                    setShowAtsHistory(true);
+                                    void loadAtsHistory();
+                                }}
+                                className="w-full border border-white/70 text-white font-semibold py-2 rounded hover:bg-white/10 transition text-sm"
+                            >
+                                {ui('View saved ATS analyses')}
+                            </button>
+                        </div>
                     </div>
 
                     {/* Job Match Modal */}
                     {isJobModalOpen && (
                         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                            <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 animate-in fade-in zoom-in duration-200">
+                            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 animate-in fade-in zoom-in duration-200">
                                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-black">
-                            <Sparkles className="text-purple-600" /> {ui('Tailor Resume to Job')}
+                                                    <Sparkles className="text-purple-600" /> {ui('Analyze Job Match / Tailor Resume')}
                                 </h3>
                                 <p className="text-sm text-gray-600 mb-4">
                                     {ui('Paste the job description or internship details here. We will optimize your CV to match their requirements in')} <span className="font-bold">{selectedLanguageName}</span>.
@@ -470,32 +625,189 @@ export const ResumeEditor = ({ resumeId }: { isPremium?: boolean; resumeId?: str
                                     className="w-full h-40 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 mb-4 text-black"
                                     placeholder={ui('Paste job description here...')}
                                     value={jobDescriptionInput}
-                                    onChange={(e) => setJobDescriptionInput(e.target.value)}
-                                    maxLength={3000}
+                                    onChange={(e) => {
+                                        setJobDescriptionInput(e.target.value);
+                                        setAtsError(null);
+                                        setAtsResult(null);
+                                    }}
+                                    maxLength={20000}
                                 />
-                                <p className="-mt-3 mb-3 text-right text-xs text-gray-500">{jobDescriptionInput.length}/3000</p>
+                                <p className="-mt-3 mb-3 text-right text-xs text-gray-500">{jobDescriptionInput.length}/20000</p>
+                                <p className="-mt-2 mb-3 text-xs text-gray-500">{ui('Successful ATS results, job descriptions, and short CV evidence excerpts are kept for up to 90 days (maximum 50 per account). You can view or delete them later.')}</p>
+                                <div className="mb-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const next = !showAtsHistory;
+                                            setShowAtsHistory(next);
+                                            if (next) void loadAtsHistory();
+                                        }}
+                                        className="text-sm font-semibold text-indigo-700 underline"
+                                    >
+                                        {showAtsHistory ? ui('Hide saved ATS analyses') : ui('View saved ATS analyses')}
+                                    </button>
+                                    {showAtsHistory && (
+                                        <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded border border-indigo-100 bg-indigo-50 p-2">
+                                            {isLoadingAtsHistory && <p className="text-sm text-gray-600">{ui('Loading saved analyses...')}</p>}
+                                            {atsHistoryError && <p role="alert" className="text-sm text-red-700">{atsHistoryError}</p>}
+                                            {!isLoadingAtsHistory && !atsHistoryError && atsHistory.length === 0 && <p className="text-sm text-gray-600">{ui('No saved ATS analyses yet.')}</p>}
+                                            {atsHistory.map((item) => (
+                                                <div key={item.id} className="flex items-center gap-2 rounded bg-white p-2 text-sm">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setJobDescriptionInput(item.jobDescription);
+                                                            setAtsResult(item.result);
+                                                            setAtsError(null);
+                                                        }}
+                                                        className="min-w-0 flex-1 text-left"
+                                                    >
+                                                        <span className="block truncate font-medium text-gray-900">{item.jobDescription}</span>
+                                                        <span className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleString(selectedLanguage)} · {Math.round(item.result.atsScore.score)}%</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void deleteAtsHistoryItem(item.id)}
+                                                        aria-label={ui('Delete saved ATS analysis')}
+                                                        title={ui('Delete saved ATS analysis')}
+                                                        className="rounded p-1 text-red-600 hover:bg-red-50"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="text-xs text-gray-500 mb-4">{ui('ATS analysis and resume tailoring each use one AI credit after a successful result.')}</p>
+                                {atsError && <p role="alert" className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800">{atsError}</p>}
+                                {!atsResult && !atsError && !isMatching && <p className="mb-4 rounded bg-indigo-50 p-3 text-xs text-indigo-900">{ui('Enter a job description and choose Score CV Match to see an explainable compatibility result.')}</p>}
+                                {atsResult && (
+                                    <section className="border border-indigo-200 rounded-lg p-4 mb-4 space-y-3" aria-live="polite">
+                                        <div className="flex flex-wrap items-center justify-between gap-3">
+                                            <div>
+                                                <h4 className="font-bold text-gray-900">{ui('Job match score')}</h4>
+                                                <p className="text-xs text-gray-500">{ui('Exact contribution')}: {atsResult.atsScore.ruleCoverage}% · {ui('Hybrid coverage')}: {atsResult.atsScore.hybridCoverage}% · {ui('Confidence')}: {ui(atsResult.atsScore.confidence)}</p>
+                                            </div>
+                                            <span className="text-3xl font-bold text-indigo-700">{Math.round(atsResult.atsScore.score)}%</span>
+                                        </div>
+                                        <p className="text-xs text-amber-800 bg-amber-50 rounded p-2">{ui('This score is a job-fit indicator, not a hiring decision or probability.')}</p>
+                                        <p className="text-xs text-gray-600">{ui('Parameters are starting values, not calibrated.')}</p>
+                                        <p className="text-xs text-gray-600">{ui('Semantic similarity is supporting evidence, not proof that a skill is present.')}</p>
+                                        {atsResult.excludedSkillCount > 0 && <p className="text-xs text-amber-800 bg-amber-50 rounded p-2">{ui('Some extracted skills were excluded because they were invalid, duplicated, or could not be verified in the job description.')} ({atsResult.excludedSkillCount})</p>}
+                                        <p className="text-xs text-gray-500">{ui('Algorithm version')}: {atsResult.atsScore.algorithmVersion} · τlow {atsResult.atsScore.params.tauLow} · τhigh {atsResult.atsScore.params.tauHigh} · β {atsResult.atsScore.params.beta} · {ui('Required weight')} {atsResult.atsScore.params.requiredWeight} · {ui('Preferred weight')} {atsResult.atsScore.params.preferredWeight}</p>
+                                        <div className="max-h-64 overflow-y-auto space-y-2">
+                                            {[...atsResult.atsScore.matched, ...atsResult.atsScore.semantic].map((item) => (
+                                                <div key={`${item.keyword}-${item.matchType}`} className="rounded border border-emerald-100 bg-emerald-50 p-2 text-sm">
+                                                    <div className="font-semibold text-gray-900">{item.keyword} <span className="font-normal text-xs text-gray-600">· {item.matchType === 'exact' ? ui(item.matchedWith ? 'Recognized equivalent term' : 'Direct wording match') : ui('Semantic support')} · {ui(item.importance)} · {ui(item.category)}</span></div>
+                                                    {item.matchType === 'semantic' && <p className="mt-1 text-xs text-gray-600">{ui('Similarity')}: {item.similarity ?? '—'} · {ui('Semantic credit')}: {item.credit ?? '—'} · {ui('Supporting evidence')}</p>}
+                                                    {item.evidence && <p className="mt-1 text-xs text-gray-700">“{item.evidence}” <span className="text-gray-500">({item.evidenceSection})</span></p>}
+                                                    {item.matchType === 'semantic' && (
+                                                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded bg-white/70 p-2">
+                                                            <span className="text-xs text-gray-700">
+                                                                {item.relatedSkills?.length
+                                                                    ? `${ui('Related evidence found in your CV')}: ${item.relatedSkills.join(', ')}. `
+                                                                    : ''}
+                                                                {ui('If this reflects your experience, add the job wording to your CV and analyze again to update the score.')}
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setResumeData(prev => ({
+                                                                    ...prev,
+                                                                    skills: prev.skills.some(skill => skill.trim().toLocaleLowerCase() === item.keyword.trim().toLocaleLowerCase())
+                                                                        ? prev.skills
+                                                                        : [...prev.skills, item.keyword],
+                                                                }))}
+                                                                disabled={resumeData.skills.some(skill => skill.trim().toLocaleLowerCase() === item.keyword.trim().toLocaleLowerCase())}
+                                                                className="rounded border border-emerald-300 bg-white px-2 py-1 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 disabled:cursor-default disabled:opacity-60"
+                                                            >
+                                                                {resumeData.skills.some(skill => skill.trim().toLocaleLowerCase() === item.keyword.trim().toLocaleLowerCase())
+                                                                    ? ui('Added to CV')
+                                                                    : ui('Add to CV')}
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            {atsResult.atsScore.missing.map((item) => (
+                                                <div key={`${item.keyword}-missing`} className="rounded border border-amber-100 bg-amber-50 p-2 text-sm">
+                                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                                        <span>
+                                                            <span className="font-semibold text-gray-900">{item.keyword}</span>{' '}
+                                                            <span className="text-xs text-gray-600">
+                                                                · {item.relatedSkills?.length
+                                                                    ? `${ui('Related evidence found in your CV')}: ${item.relatedSkills.join(', ')}. ${ui('If you also know this skill, add it to your CV and analyze again to update the score.')}`
+                                                                    : ui('No supporting CV evidence found')}
+                                                                {' · '}{ui(item.importance)} · {ui(item.category)}
+                                                            </span>
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setResumeData(prev => ({
+                                                                ...prev,
+                                                                skills: prev.skills.some(skill => skill.trim().toLocaleLowerCase() === item.keyword.trim().toLocaleLowerCase())
+                                                                    ? prev.skills
+                                                                    : [...prev.skills, item.keyword],
+                                                            }))}
+                                                            disabled={resumeData.skills.some(skill => skill.trim().toLocaleLowerCase() === item.keyword.trim().toLocaleLowerCase())}
+                                                            className="rounded border border-amber-300 bg-white px-2 py-1 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:cursor-default disabled:opacity-60"
+                                                        >
+                                                            {resumeData.skills.some(skill => skill.trim().toLocaleLowerCase() === item.keyword.trim().toLocaleLowerCase())
+                                                                ? ui('Added to CV')
+                                                                : ui('Add to CV')}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                )}
                                 <div className="flex justify-end gap-3">
                                     <button
                                         onClick={() => {
                                             setIsJobModalOpen(false);
-                                            setJobDescriptionInput(''); // Clear input on cancel
+                                            setJobDescriptionInput('');
+                                            setAtsResult(null);
+                                            setAtsError(null);
+                                            setShowAtsLimitModal(false);
                                         }}
                                         className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
                                     >
                                         {ui('Cancel')}
                                     </button>
                                     <button
+                                        onClick={() => { void handleJobMatch(); }}
+                                        disabled={isMatching || isTailoring || jobDescriptionInput.trim().length < 30}
+                                        className="px-4 py-2 border border-indigo-600 text-indigo-700 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    >
+                                        {isMatching ? <><Loader2 className="animate-spin" size={16} /> {ui('Scoring...')}</> : ui('Score CV Match')}
+                                    </button>
+                                    <button
                                         onClick={() => { void handleJobTailor(); }}
-                                        disabled={isTailoring || jobDescriptionInput.length < 50}
+                                        disabled={isTailoring || isMatching || jobDescriptionInput.length < 50 || jobDescriptionInput.length > 3000}
                                         className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-bold shadow hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                     >
                                         {isTailoring ? <><Loader2 className="animate-spin" size={16} /> {ui('Analyzing...')}</> : ui('Analyze & Optimize')}
                                     </button>
                                 </div>
+                                {jobDescriptionInput.length > 3000 && <p className="text-xs text-amber-700 mt-2">{ui('Auto-Tailor currently accepts up to 3,000 characters; ATS matching accepts up to 20,000.')}</p>}
                             </div>
                         </div>
                     )}
 
+                    {showAtsLimitModal && (
+                        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="ats-limit-title">
+                            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+                                <h3 id="ats-limit-title" className="text-lg font-bold text-gray-900">{ui('AI Limit Reached')}</h3>
+                                <p className="my-4 text-sm text-gray-600">{ui(atsQuotaKind === 'premium' ? 'You have reached the Pro AI limit of 50 uses in 24 hours. Try again after the limit resets.' : "You've used your 5 free AI uses in your current monthly period. Pro includes up to 50 AI uses per 24 hours.")}</p>
+                                {atsQuotaResetAt && <p className="-mt-2 mb-4 text-sm text-gray-600">{ui(atsQuotaKind === 'premium' ? 'Your Pro AI allowance resets on' : 'Your monthly AI allowance resets on')} {new Date(atsQuotaResetAt).toLocaleDateString(selectedLanguage)}</p>}
+                                <div className="flex justify-end gap-3">
+                                    <button onClick={() => setShowAtsLimitModal(false)} className="rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">{ui('Continue Editing')}</button>
+                                    <Link href="/pricing" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">{ui('View Pro Plans')}</Link>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     {pendingTailor && (
                         <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
                             <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col">

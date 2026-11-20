@@ -1,13 +1,7 @@
 import Link from 'next/link';
 import { Check, Star, Zap, Shield, FileText } from 'lucide-react';
 
-export default function PricingPage({
-    searchParams,
-}: {
-    searchParams?: Promise<{ limit?: string }>
-}) {
-    // Await params if needed in future, currently just using for optional display logic if we wanted.
-
+export default function PricingPage() {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             {/* Simple Header */}
@@ -24,7 +18,7 @@ export default function PricingPage({
                         Upgrade to <span className="text-blue-600">Pro</span>
                     </h1>
                     <p className="text-xl text-gray-600">
-                        Unlock unlimited AI power and create as many resumes as you need to land your dream job.
+                        Get up to 50 AI uses every 24 hours and create as many resumes as you need to land your dream job.
                     </p>
                 </div>
 
@@ -48,7 +42,7 @@ export default function PricingPage({
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <Check className="text-green-500 shrink-0" size={20} />
-                                    <span className="text-gray-600"><strong>3 AI Optimiztions</strong> (Try it out)</span>
+                                    <span className="text-gray-600"><strong>5 AI uses</strong> per rolling month</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <Check className="text-green-500 shrink-0" size={20} />
@@ -92,7 +86,7 @@ export default function PricingPage({
                                     <div className="bg-blue-600/20 p-1 rounded-full">
                                         <Zap className="text-blue-400 shrink-0" size={14} />
                                     </div>
-                                    <span className="text-gray-300"><strong>Unlimited</strong> AI Writer Usage</span>
+                                    <span className="text-gray-300"><strong>50 AI uses</strong> per rolling 24 hours</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <div className="bg-blue-600/20 p-1 rounded-full">

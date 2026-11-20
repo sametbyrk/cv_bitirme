@@ -29,8 +29,13 @@ export default function PrivacyPage() {
 
                 <h2 className="text-xl font-bold mt-8 mb-4 text-black">3. A.I. Processing</h2>
                 <p>
-                    When you use our AI features (AI Writer, Job Match), the text you input is sent to third-party providers (Verify Provider, e.g., Google Gemini) for processing.
-                    We do not use your personal resume data to train these public models.
+                    When you use an AI feature, the relevant resume text, job description, and feedback are sent to Google Gemini API for processing. Google's data handling depends on whether the Google Cloud project is using an Unpaid or Paid Gemini API service. Under Google's current terms, Unpaid Service prompts and responses may be used to improve Google products and may be reviewed by people; Google says not to submit personal or sensitive information to Unpaid Services. For Paid Services, prompts and responses are not used to improve Google products, but Google may retain limited safety logs and may store them in countries where it or its agents operate. See the current <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noreferrer">Gemini API terms</a>.
+                </p>
+                <p>
+                    This processing may involve transfers outside Türkiye. Before offering the service to real users, the operator must determine and implement an applicable legal basis and cross-border transfer safeguard. This notice alone does not establish those requirements.
+                </p>
+                <p>
+                    After a successful Job Match analysis, we save the job description and its explainable ATS result in your account history so you can view it later. The result can include short evidence excerpts (up to 25 words each) from your resume; we do not save a full resume copy. We delete records after 90 days and retain no more than the latest 50 per account, whichever limit is reached first. A daily cleanup job removes expired records; expired records are also removed when history is accessed or a new result is stored. You can review or delete individual results in the resume editor. Deleting a saved resume also deletes analyses linked to that resume.
                 </p>
 
                 <h2 className="text-xl font-bold mt-8 mb-4 text-black">4. Data Security</h2>

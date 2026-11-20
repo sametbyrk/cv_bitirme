@@ -95,7 +95,7 @@ const AiCompareModal = ({ originalText, aiText, onAccept, onReject }: AiCompareM
 );
 
 // --- AI LIMIT MODAL ---
-const AiLimitModal = ({ onClose }: { onClose: () => void }) => (
+const AiLimitModal = ({ onClose, premiumLimit = false }: { onClose: () => void; premiumLimit?: boolean }) => (
     <AnimatePresence>
         <motion.div
             key="limit-modal-backdrop"
@@ -121,15 +121,15 @@ const AiLimitModal = ({ onClose }: { onClose: () => void }) => (
                         <Zap size={22} className="text-white" />
                     </div>
                     <h2 className="text-lg font-bold text-gray-900 mb-2"><L text="AI Limit Reached" /></h2>
-                    <p className="text-sm text-gray-500 mb-6"><L text="You've used your 5 free AI optimizations. Upgrade to Pro for unlimited AI rewrites." /></p>
+                    <p className="text-sm text-gray-500 mb-6"><L text={premiumLimit ? 'You have reached the Pro AI limit of 50 uses in 24 hours. Try again after the limit resets.' : 'You have reached the free AI limit of 5 uses in your current monthly period.'} /></p>
                     <div className="flex flex-col gap-2">
-                        <a
+                        {!premiumLimit && <a
                             href="/pricing"
                             className="block w-full py-3 rounded-xl text-white text-sm font-bold text-center transition-all shadow-md hover:shadow-lg"
                             style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}
                         >
                             <L text="View Pro Plans" />
-                        </a>
+                        </a>}
                         <button
                             onClick={onClose}
                             className="w-full py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors"
@@ -451,6 +451,7 @@ export const ExperienceForm = () => {
     const [loadingId, setLoadingId] = useState<string | null>(null);
     const [compareModal, setCompareModal] = useState<{ id: string; original: string; ai: string } | null>(null);
     const [showLimitModal, setShowLimitModal] = useState(false);
+    const [premiumLimit, setPremiumLimit] = useState(false);
 
     const addExperience = () => {
         setResumeData((prev) => ({
@@ -495,7 +496,8 @@ export const ExperienceForm = () => {
             });
             const data = await response.json();
 
-            if (response.status === 403) {
+            if (response.status === 429 && ['AI_QUOTA_EXCEEDED', 'PREMIUM_AI_QUOTA_EXCEEDED'].includes(data?.detail?.code || data?.code)) {
+                setPremiumLimit((data?.detail?.code || data?.code) === 'PREMIUM_AI_QUOTA_EXCEEDED');
                 setShowLimitModal(true);
                 return;
             }
@@ -523,7 +525,7 @@ export const ExperienceForm = () => {
 
     return (
         <div className="space-y-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-            {showLimitModal && <AiLimitModal onClose={() => setShowLimitModal(false)} />}
+            {showLimitModal && <AiLimitModal premiumLimit={premiumLimit} onClose={() => setShowLimitModal(false)} />}
             {compareModal && (
                 <AiCompareModal
                     originalText={compareModal.original}
@@ -662,6 +664,7 @@ export const ProjectsForm = () => {
     const [loadingId, setLoadingId] = useState<string | null>(null);
     const [compareModal, setCompareModal] = useState<{ id: string; original: string; ai: string } | null>(null);
     const [showLimitModal, setShowLimitModal] = useState(false);
+    const [premiumLimit, setPremiumLimit] = useState(false);
 
     const addProject = () => {
         setResumeData((prev) => ({
@@ -706,7 +709,8 @@ export const ProjectsForm = () => {
             });
             const data = await response.json();
 
-            if (response.status === 403) {
+            if (response.status === 429 && ['AI_QUOTA_EXCEEDED', 'PREMIUM_AI_QUOTA_EXCEEDED'].includes(data?.detail?.code || data?.code)) {
+                setPremiumLimit((data?.detail?.code || data?.code) === 'PREMIUM_AI_QUOTA_EXCEEDED');
                 setShowLimitModal(true);
                 return;
             }
@@ -734,7 +738,7 @@ export const ProjectsForm = () => {
 
     return (
         <div className="space-y-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm mt-4">
-            {showLimitModal && <AiLimitModal onClose={() => setShowLimitModal(false)} />}
+            {showLimitModal && <AiLimitModal premiumLimit={premiumLimit} onClose={() => setShowLimitModal(false)} />}
             {compareModal && (
                 <AiCompareModal
                     originalText={compareModal.original}
